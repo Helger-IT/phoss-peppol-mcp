@@ -3,6 +3,7 @@
 target/
 
 .classpath
+.DS_Store
 .project
 dependency-reduced-pom.xml
 zz
