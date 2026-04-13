@@ -7,16 +7,15 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 
 import com.helger.peppolid.IProcessIdentifier;
-import com.helger.peppolid.factory.PeppolIdentifierFactory;
 import com.helger.peppolid.peppol.doctype.IPeppolPredefinedDocumentTypeIdentifier;
 import com.helger.peppolid.peppol.doctype.PredefinedDocumentTypeIdentifierManager;
-import com.helger.peppolid.peppol.pidscheme.IPeppolParticipantIdentifierScheme;
 import com.helger.peppolid.peppol.pidscheme.PeppolParticipantIdentifierSchemeManager;
 import com.helger.peppolid.peppol.process.IPeppolPredefinedProcessIdentifier;
 import com.helger.peppolid.peppol.process.PredefinedProcessIdentifierManager;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -24,7 +23,7 @@ import tools.jackson.databind.ObjectMapper;
  * These tools go beyond syntactic validation: they verify that a given identifier is an officially
  * registered value in the Peppol code lists.
  */
-public class PeppolCodelistTools
+public final class PeppolCodelistTools
 {
   private static final ObjectMapper MAPPER = new ObjectMapper ();
 
@@ -32,27 +31,17 @@ public class PeppolCodelistTools
   // Tool 1: Check participant identifier scheme in codelist
   // -------------------------------------------------------------------------
 
-  private McpSchema.@NonNull CallToolResult _checkParticipantIdSchemeInCodelist (@NonNull final String sInput)
+  @NonNull
+  private CallToolResult _checkParticipantIdSchemeInCodelist (@NonNull final String sInput)
   {
     try
     {
-      // Try to parse as a full participant identifier first; fall back to treating as ISO 6523 code
-      IPeppolParticipantIdentifierScheme aScheme = null;
-      String sISO6523Code;
-
-      final var aPID = PeppolIdentifierFactory.INSTANCE.createParticipantIdentifierWithDefaultScheme (sInput);
-      if (aPID != null)
-      {
-        aScheme = PeppolParticipantIdentifierSchemeManager.getSchemeOfIdentifier (aPID);
-        final String sValue = aPID.getValue ();
-        final int nColon = sValue.indexOf (':');
-        sISO6523Code = nColon > 0 ? sValue.substring (0, nColon) : sValue;
-      }
-      else
-      {
-        sISO6523Code = sInput;
-        aScheme = PeppolParticipantIdentifierSchemeManager.getSchemeOfISO6523Code (sISO6523Code);
-      }
+      // Try to parse as a full participant identifier
+      final var aPID = Helper.parseParticipantId (sInput, true);
+      final var aScheme = PeppolParticipantIdentifierSchemeManager.getSchemeOfIdentifier (aPID);
+      final String sValue = aPID.getValue ();
+      final int nColon = sValue.indexOf (':');
+      final var sISO6523Code = nColon > 0 ? sValue.substring (0, nColon) : sValue;
 
       final Map <String, Object> aResult = new LinkedHashMap <> ();
       aResult.put ("iso6523Code", sISO6523Code);
@@ -62,9 +51,11 @@ public class PeppolCodelistTools
       {
         aResult.put ("schemeID", aScheme.getSchemeID ());
         aResult.put ("schemeName", aScheme.getSchemeName ());
+        aResult.put ("schemeAgency", aScheme.getSchemeAgency ());
         aResult.put ("countryCode", aScheme.getCountryCode ());
         aResult.put ("state", aScheme.getState ().getID ());
-        aResult.put ("deprecated", Boolean.valueOf (aScheme.isDeprecated ()));
+        if (aScheme.getRemovalDate () != null)
+          aResult.put ("removalDate", aScheme.getRemovalDate ().toString ());
       }
 
       final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ().writeValueAsString (aResult);
@@ -104,8 +95,8 @@ public class PeppolCodelistTools
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sInput = (String) request.arguments ().get ("participantId");
-      return _checkParticipantIdSchemeInCodelist (sInput);
+      final String sPID = (String) request.arguments ().get ("participantId");
+      return _checkParticipantIdSchemeInCodelist (sPID);
     });
   }
 
@@ -113,29 +104,29 @@ public class PeppolCodelistTools
   // Tool 2: Check document type identifier in codelist
   // -------------------------------------------------------------------------
 
-  private McpSchema.@NonNull CallToolResult _checkDocumentTypeIdInCodelist (@NonNull final String sDTID)
+  @NonNull
+  private CallToolResult _checkDocumentTypeIdInCodelist (@NonNull final String sDTID)
   {
     try
     {
-      final IPeppolPredefinedDocumentTypeIdentifier aDocType = PredefinedDocumentTypeIdentifierManager.getDocumentTypeIdentifierOfID (sDTID);
+      final IPeppolPredefinedDocumentTypeIdentifier aDocTypeID = PredefinedDocumentTypeIdentifierManager.getDocumentTypeIdentifierOfID (sDTID);
 
       final Map <String, Object> aResult = new LinkedHashMap <> ();
       aResult.put ("documentTypeId", sDTID);
-      aResult.put ("inCodelist", Boolean.valueOf (aDocType != null));
+      aResult.put ("inCodelist", Boolean.valueOf (aDocTypeID != null));
 
-      if (aDocType != null)
+      if (aDocTypeID != null)
       {
-        aResult.put ("commonName", aDocType.getCommonName ());
-        aResult.put ("scheme", aDocType.getScheme ());
-        aResult.put ("state", aDocType.getState ().getID ());
-        aResult.put ("deprecated", Boolean.valueOf (aDocType.isDeprecated ()));
-        if (aDocType.getRemovalDate () != null)
-          aResult.put ("removalDate", aDocType.getRemovalDate ().toString ());
-        aResult.put ("bisVersion", Integer.valueOf (aDocType.getBISVersion ()));
-        aResult.put ("domainCommunity", aDocType.getDomainCommunity ());
-        aResult.put ("issuedByOpenPeppol", Boolean.valueOf (aDocType.isIssuedByOpenPeppol ()));
+        aResult.put ("commonName", aDocTypeID.getCommonName ());
+        aResult.put ("scheme", aDocTypeID.getScheme ());
+        aResult.put ("state", aDocTypeID.getState ().getID ());
+        if (aDocTypeID.getRemovalDate () != null)
+          aResult.put ("removalDate", aDocTypeID.getRemovalDate ().toString ());
+        aResult.put ("bisVersion", Integer.valueOf (aDocTypeID.getBISVersion ()));
+        aResult.put ("domainCommunity", aDocTypeID.getDomainCommunity ());
+        aResult.put ("issuedByOpenPeppol", Boolean.valueOf (aDocTypeID.isIssuedByOpenPeppol ()));
 
-        final var aProcessIDs = aDocType.getAllProcessIDs ();
+        final var aProcessIDs = aDocTypeID.getAllProcessIDs ();
         if (aProcessIDs != null && aProcessIDs.isNotEmpty ())
           aResult.put ("processIDs", aProcessIDs.getAllMapped (IProcessIdentifier::getURIEncoded));
       }
@@ -186,22 +177,21 @@ public class PeppolCodelistTools
   // Tool 3: Check process identifier in codelist
   // -------------------------------------------------------------------------
 
-  private McpSchema.@NonNull CallToolResult _checkProcessIdInCodelist (@NonNull final String sPRID)
+  private @NonNull CallToolResult _checkProcessIdInCodelist (@NonNull final String sPRID)
   {
     try
     {
-      final IPeppolPredefinedProcessIdentifier aProcId = PredefinedProcessIdentifierManager.getProcessIdentifierOfID (sPRID);
+      final IPeppolPredefinedProcessIdentifier aProcID = PredefinedProcessIdentifierManager.getProcessIdentifierOfID (sPRID);
 
       final Map <String, Object> aResult = new LinkedHashMap <> ();
       aResult.put ("processId", sPRID);
-      aResult.put ("inCodelist", Boolean.valueOf (aProcId != null));
+      aResult.put ("inCodelist", Boolean.valueOf (aProcID != null));
 
-      if (aProcId != null)
+      if (aProcID != null)
       {
-        aResult.put ("scheme", aProcId.getScheme ());
-        aResult.put ("value", aProcId.getValue ());
-        aResult.put ("state", aProcId.getState ().getID ());
-        aResult.put ("deprecated", Boolean.valueOf (aProcId.isDeprecated ()));
+        aResult.put ("scheme", aProcID.getScheme ());
+        aResult.put ("value", aProcID.getValue ());
+        aResult.put ("state", aProcID.getState ().getID ());
       }
 
       final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ().writeValueAsString (aResult);

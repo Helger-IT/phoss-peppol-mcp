@@ -5,11 +5,35 @@ capabilities as tools to AI models such as Claude.
 
 ## Tools exposed
 
-- lookup_peppol_participant       — Check if a company is registered on Peppol
-- check_peppol_document_type_support — Check if a participant supports a document type
-- get_peppol_endpoint_url         — Get the AS4 endpoint URL for sending
-- validate_peppol_participant_id  — Validate participant ID format (no network needed)
-- search_peppol_directory         — Search for participants by company name/country
+### SMP lookup tools (require network)
+
+| Tool | Description |
+|------|-------------|
+| `lookup_peppol_participant` | Check if a company is registered on the Peppol network |
+| `check_peppol_document_type_support` | Check if a participant supports a specific document type |
+| `get_peppol_endpoint_url` | Get the AS4 endpoint URL for sending to a participant |
+
+### Peppol Directory tools (require network)
+
+| Tool | Description |
+|------|-------------|
+| `search_peppol_directory` | Search for participants by company name and/or country |
+
+### Identifier validation tools (local, no network)
+
+| Tool | Description |
+|------|-------------|
+| `validate_participant_id_syntax` | Validate participant identifier format |
+| `validate_document_type_id_syntax` | Validate document type identifier format |
+| `validate_process_id_syntax` | Validate process identifier format |
+
+### Codelist lookup tools (local, no network)
+
+| Tool | Description |
+|------|-------------|
+| `check_participant_id_scheme_in_codelist` | Check if a participant ID scheme (ISO 6523) is in the official codelist |
+| `check_document_type_id_in_codelist` | Check if a document type ID is in the official codelist |
+| `check_process_id_in_codelist` | Check if a process ID is in the official codelist |
 
 ## Build
 
@@ -17,18 +41,22 @@ capabilities as tools to AI models such as Claude.
 mvn clean package
 ```
 
+This produces a runnable fat JAR at `target/peppol-mcp-server-1.0.0-SNAPSHOT.jar`.
+
 ## Testing
 
-### Level 1 — Unit tests (no network, fast)
+### Level 1 — Unit tests
 
 ```shell
 mvn test
 ```
 
+Note: some tests hit the live Peppol test network (SMK).
+
 ### Level 2 — MCP Inspector (validates MCP protocol)
 
 ```shell
-npx @modelcontextprotocol/inspector java -jar target/peppol-mcp-server.jar
+npx @modelcontextprotocol/inspector java -jar target/peppol-mcp-server-1.0.0-SNAPSHOT.jar
 ```
 
 This opens a browser UI at `http://localhost:5173` where you can invoke
@@ -44,7 +72,7 @@ Add to your Claude Desktop config
       "mcpServers": {
         "peppol": {
           "command": "java",
-          "args": ["-jar", "/absolute/path/to/target/peppol-mcp-server.jar"]
+          "args": ["-jar", "/absolute/path/to/target/peppol-mcp-server-1.0.0-SNAPSHOT.jar"]
         }
       }
     }
@@ -53,6 +81,8 @@ Restart Claude Desktop and ask questions like:
   - "Is company 0192:991825827 registered on Peppol?"
   - "Can I send a Peppol BIS Billing 3.0 invoice to participant 0088:4012345678901?"
   - "Find Peppol participants named Helger in Austria"
+  - "Is 0088 a valid Peppol participant identifier scheme?"
+  - "Look up the process ID urn:fdc:peppol.eu:2017:poacc:billing:01:1.0 in the codelist"
 
 ## Important: stdout vs stderr
 
@@ -61,10 +91,7 @@ Any logging written to stdout will corrupt the protocol framing and break
 the connection. The `logback.xml` in this project enforces stderr-only logging.
 Never use `System.out.println()` in tool implementations.
 
-## Switching to the Peppol test network (SMK)
+## Switching between Peppol production and test network
 
-Change the SML_DNS_ZONE constant in PeppolSmpTools.java to:
-
-    acc.edelivery.tech.ec.europa.eu
-
-This points to the Peppol Acceptance (test) network instead of production.
+The network is configured in `PeppolMcpServer.main()` via `EPeppolNetwork.PRODUCTION`
+or `EPeppolNetwork.TEST`.
