@@ -13,11 +13,11 @@ capabilities as tools to AI models such as Claude.
 | `check_peppol_document_type_support` | Check if a participant supports a specific document type |
 | `get_peppol_endpoint_url` | Get the AS4 endpoint URL for sending to a participant |
 
-### Peppol Directory tools (require network)
+### Peppol Directory tools (require network, rate-limited to 2 queries/sec)
 
 | Tool | Description |
 |------|-------------|
-| `search_peppol_directory` | Search for participants by company name and/or country |
+| `search_peppol_directory` | Search for participants by name, identifier, or any other field |
 
 ### Identifier validation tools (local, no network)
 
@@ -94,6 +94,9 @@ Restart Claude Desktop and ask questions like:
   - "Is company 0192:991825827 registered on Peppol?"
   - "Can I send a Peppol BIS Billing 3.0 invoice to participant 0088:4012345678901?"
   - "Find Peppol participants named Helger in Austria"
+  - "Search the Peppol Directory for ATU80962638"
+  - "What active document types exist for billing?"
+  - "Which participant ID schemes are available for Norway?"
   - "Is 0088 a valid Peppol participant identifier scheme?"
   - "Look up the process ID urn:fdc:peppol.eu:2017:poacc:billing:01:1.0 in the codelist"
 

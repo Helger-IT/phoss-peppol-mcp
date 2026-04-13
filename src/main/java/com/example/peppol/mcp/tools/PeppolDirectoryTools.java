@@ -48,78 +48,119 @@ public class PeppolDirectoryTools
     m_eNetwork = eNetwork;
   }
 
+  @NonNull
+  private static String _enc (@NonNull final String s)
+  {
+    return URLEncoder.encode (s, StandardCharsets.UTF_8);
+  }
+
+  @NonNull
+  private List <Map <String, Object>> _parseMatches (@NonNull final JsonNode aRoot)
+  {
+    final List <Map <String, Object>> aResults = new ArrayList <> ();
+    if (!aRoot.has ("matches"))
+      return aResults;
+
+    aRoot.get ("matches").forEach (match -> {
+      final Map <String, Object> aEntry = new LinkedHashMap <> ();
+
+      if (match.has ("participantID"))
+      {
+        final JsonNode aPIDNode = match.get ("participantID");
+        if (aPIDNode.isObject ())
+          aEntry.put ("participantId",
+                      aPIDNode.path ("scheme").asString ("") + "::" + aPIDNode.path ("value").asString (""));
+        else
+          aEntry.put ("participantId", aPIDNode.asString ());
+      }
+
+      if (match.has ("entities") && match.get ("entities").isArray ())
+      {
+        match.get ("entities").forEach (entity -> {
+          if (entity.has ("name") && entity.get ("name").isArray ())
+            entity.get ("name").forEach (n -> aEntry.put ("companyName", n.get ("name").asString ()));
+          if (entity.has ("countryCode"))
+            aEntry.put ("country", entity.get ("countryCode").asString ());
+        });
+      }
+
+      if (match.has ("docTypes") && match.get ("docTypes").isArray ())
+      {
+        final List <String> aDocTypes = new ArrayList <> ();
+        match.get ("docTypes").forEach (dt -> {
+          if (dt.isObject ())
+            aDocTypes.add (dt.path ("scheme").asString ("") + "::" + dt.path ("value").asString (""));
+          else
+            aDocTypes.add (dt.asString ());
+        });
+        aEntry.put ("supportedDocumentTypes", aDocTypes);
+      }
+
+      aResults.add (aEntry);
+    });
+
+    return aResults;
+  }
+
+  @NonNull
+  private HttpResponse <String> _executeRequest (@NonNull final String sURL) throws Exception
+  {
+    final var aRequest = HttpRequest.newBuilder ()
+                                    .uri (URI.create (sURL))
+                                    .header (CHttpHeader.ACCEPT, "application/json")
+                                    .header (CHttpHeader.USER_AGENT, CPhossPeppolMcp.USER_AGENT_PART)
+                                    .GET ()
+                                    .build ();
+
+    final var aResponse = m_aHttpClient.send (aRequest, HttpResponse.BodyHandlers.ofString ());
+
+    final int nStatusCode = aResponse.statusCode ();
+    if (nStatusCode == 429)
+    {
+      final String sRetryAfter = aResponse.headers ()
+                                          .firstValue (CHttpHeader.RETRY_AFTER)
+                                          .orElse (null);
+      throw new RuntimeException ("Peppol Directory rate limit exceeded (HTTP 429)." +
+                                  (sRetryAfter != null ? " Retry after " + sRetryAfter + " seconds." : ""));
+    }
+    if (nStatusCode != 200)
+      throw new RuntimeException ("Peppol Directory returned HTTP " + nStatusCode);
+
+    return aResponse;
+  }
+
   // -------------------------------------------------------------------------
-  // Tool: Search participants by company name
+  // Tool: Search Peppol Directory
   // -------------------------------------------------------------------------
 
-  private @NonNull CallToolResult _executeSearch (@NonNull final String sCompanyName,
+  private @NonNull CallToolResult _executeSearch (@NonNull final String sQuery,
                                                   @Nullable final String sCountryCode,
                                                   final int nMaxResults)
   {
     try
     {
       final var aSB = new StringBuilder (m_eNetwork.getDirectoryURL () + "/search/1.0/json");
-      aSB.append ("?name=").append (URLEncoder.encode (sCompanyName, StandardCharsets.UTF_8));
+      aSB.append ("?q=").append (_enc (sQuery));
       if (nMaxResults > 0)
         aSB.append ("&resultPageCount=").append (nMaxResults);
       if (StringHelper.isNotEmpty (sCountryCode))
-        aSB.append ("&country=")
-           .append (URLEncoder.encode (sCountryCode.toUpperCase (Locale.US), StandardCharsets.UTF_8));
+        aSB.append ("&country=").append (_enc (sCountryCode.toUpperCase (Locale.US)));
 
-      final var aRequest = HttpRequest.newBuilder ()
-                                      .uri (URI.create (aSB.toString ()))
-                                      .header (CHttpHeader.ACCEPT, "application/json")
-                                      .header (CHttpHeader.USER_AGENT, CPhossPeppolMcp.USER_AGENT_PART)
-                                      .GET ()
-                                      .build ();
-
-      final var aResponse = m_aHttpClient.send (aRequest, HttpResponse.BodyHandlers.ofString ());
-
-      if (aResponse.statusCode () != 200)
-        throw new RuntimeException ("Peppol Directory returned HTTP " + aResponse.statusCode ());
-
+      final var aResponse = _executeRequest (aSB.toString ());
+      final long nTotalResultCount = aResponse.headers ()
+                                              .firstValueAsLong ("total-result-count")
+                                              .orElse (-1);
       final JsonNode aRoot = MAPPER.readTree (aResponse.body ());
-      final List <Map <String, Object>> aResults = new ArrayList <> ();
+      final var aResults = _parseMatches (aRoot);
 
-      if (aRoot.has ("matches"))
-      {
-        aRoot.get ("matches").forEach (match -> {
-          final Map <String, Object> aEntry = new LinkedHashMap <> ();
-
-          if (match.has ("participantID"))
-            aEntry.put ("participantId", match.get ("participantID").asString ());
-
-          if (match.has ("entities") && match.get ("entities").isArray ())
-          {
-            match.get ("entities").forEach (entity -> {
-              if (entity.has ("name") && entity.get ("name").isArray ())
-                entity.get ("name").forEach (n -> aEntry.put ("companyName", n.get ("name").asString ()));
-              if (entity.has ("countryCode"))
-                aEntry.put ("country", entity.get ("countryCode").asString ());
-            });
-          }
-
-          if (match.has ("docTypes") && match.get ("docTypes").isArray ())
-          {
-            final List <String> aDocTypes = new ArrayList <> ();
-            match.get ("docTypes").forEach (dt -> aDocTypes.add (dt.asString ()));
-            aEntry.put ("supportedDocumentTypes", aDocTypes);
-          }
-
-          aResults.add (aEntry);
-        });
-      }
-
-      final var aResponseMap = Map.of ("query",
-                                       sCompanyName,
-                                       "network",
-                                       m_eNetwork.name (),
-                                       "country",
-                                       sCountryCode != null ? sCountryCode : "all",
-                                       "totalMatches",
-                                       Integer.valueOf (aResults.size ()),
-                                       "results",
-                                       aResults);
+      final Map <String, Object> aResponseMap = new LinkedHashMap <> ();
+      aResponseMap.put ("query", sQuery);
+      aResponseMap.put ("network", m_eNetwork.name ());
+      aResponseMap.put ("country", sCountryCode != null ? sCountryCode : "all");
+      if (nTotalResultCount >= 0)
+        aResponseMap.put ("totalResultCount", Long.valueOf (nTotalResultCount));
+      aResponseMap.put ("returnedMatches", Integer.valueOf (aResults.size ()));
+      aResponseMap.put ("results", aResults);
 
       return McpSchema.CallToolResult.builder ()
                                      .addTextContent (MAPPER.writerWithDefaultPrettyPrinter ()
@@ -143,19 +184,20 @@ public class PeppolDirectoryTools
     final var aTool = McpSchema.Tool.builder ()
                                     .name ("search_peppol_directory")
                                     .description ("""
-                                        Searches the Peppol Directory (the public registry of all Peppol participants)
-                                        by company name and optional country code. Use this when a user knows a company
-                                        name but not their Peppol participant ID, or wants to discover which companies
-                                        in a given country are registered on the Peppol network.
-                                        Returns a list of matching participants with their participant IDs and supported
-                                        document types. Country codes follow ISO 3166-1 alpha-2, e.g. DE, FR, AT, NO.
-                                        """)
+                                        Searches the Peppol Directory (the public registry of all Peppol participants) \
+                                        using a generic query that matches across all fields: company name, participant \
+                                        ID, country, identifiers, and more. Use this when a user knows a company name, \
+                                        an identifier value (like an ATU number), or any other detail, and wants to find \
+                                        matching Peppol participants. The countryCode parameter can be used to narrow \
+                                        results to a specific country. Country codes follow ISO 3166-1 alpha-2, e.g. \
+                                        DE, FR, AT, NO. Note: the Peppol Directory API is rate-limited to 2 queries \
+                                        per second.""")
                                     .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("companyName",
+                                                                            Map.of ("query",
                                                                                     Map.of ("type",
                                                                                             "string",
                                                                                             "description",
-                                                                                            "Company name or partial name to search for"),
+                                                                                            "Search query — matches across all fields: company name, participant ID, identifiers, etc."),
                                                                                     "countryCode",
                                                                                     Map.of ("type",
                                                                                             "string",
@@ -165,8 +207,8 @@ public class PeppolDirectoryTools
                                                                                     Map.of ("type",
                                                                                             "integer",
                                                                                             "description",
-                                                                                            "Maximum number of results to return (default 10, max 100)")),
-                                                                            List.of ("companyName"),
+                                                                                            "Maximum number of results to return (default 10, max 1000)")),
+                                                                            List.of ("query"),
                                                                             Boolean.FALSE,
                                                                             null,
                                                                             null))
@@ -174,10 +216,10 @@ public class PeppolDirectoryTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final var aArgs = request.arguments ();
-      final String sCompanyName = (String) aArgs.get ("companyName");
+      final String sQuery = (String) aArgs.get ("query");
       final String sCountryCode = (String) aArgs.getOrDefault ("countryCode", null);
       final int nMaxResults = ((Number) aArgs.getOrDefault ("maxResults", Integer.valueOf (10))).intValue ();
-      return _executeSearch (sCompanyName, sCountryCode, nMaxResults);
+      return _executeSearch (sQuery, sCountryCode, nMaxResults);
     });
   }
 }
