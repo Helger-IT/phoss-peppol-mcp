@@ -128,3 +128,8 @@ Claude Desktop config for the test network:
     }
 
 Other CLI options: `--help`, `--version`.
+
+# News and noteworthy
+
+v0.5.0 - 2026-04-13
+* Initial release
