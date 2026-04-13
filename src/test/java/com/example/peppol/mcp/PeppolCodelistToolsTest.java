@@ -64,6 +64,25 @@ class PeppolCodelistToolsTest
   }
 
   // -----------------------------------------------------------------------
+  // Codelist version
+  // -----------------------------------------------------------------------
+
+  @Test
+  void testGetCodelistVersion ()
+  {
+    final var aResult = m_aTools.getCodelistVersionTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("get_peppol_codelist_version", Map.of ()));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"participantIdentifierSchemeCodelistVersion\""));
+    assertTrue (sContent.contains ("\"documentTypeCodelistVersion\""));
+    assertTrue (sContent.contains ("\"processCodelistVersion\""));
+  }
+
+  // -----------------------------------------------------------------------
   // Participant identifier scheme codelist
   // -----------------------------------------------------------------------
 

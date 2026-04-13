@@ -215,6 +215,53 @@ public final class PeppolCodelistTools
     }
   }
 
+  // -------------------------------------------------------------------------
+  // Tool 4: Get codelist version
+  // -------------------------------------------------------------------------
+
+  @NonNull
+  private CallToolResult _getCodelistVersion ()
+  {
+    try
+    {
+      final Map <String, Object> aResult = new LinkedHashMap <> ();
+      aResult.put ("participantIdentifierSchemeCodelistVersion", EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
+      aResult.put ("documentTypeCodelistVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
+      aResult.put ("processCodelistVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
+
+      final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ().writeValueAsString (aResult);
+      return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
+    }
+    catch (final Exception ex)
+    {
+      return McpSchema.CallToolResult.builder ()
+                                     .addTextContent ("Error: " + ex.getMessage ())
+                                     .isError (Boolean.TRUE)
+                                     .build ();
+    }
+  }
+
+  @NonNull
+  public SyncToolSpecification getCodelistVersionTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("get_peppol_codelist_version")
+                                    .description ("""
+                                        Returns the version of the Peppol codelists currently in use. \
+                                        This includes the version of the Participant identifier scheme, \
+                                        Document Type, and Process identifier codelists. \
+                                        No input parameters required.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of (),
+                                                                            List.of (),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> _getCodelistVersion ());
+  }
+
   @NonNull
   public SyncToolSpecification checkProcessIdInCodelistTool ()
   {

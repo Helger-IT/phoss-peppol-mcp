@@ -69,7 +69,8 @@ public class PhossPeppolMcpServer
                                                   // Codelist lookup tools
                                                   aCodelistTools.checkParticipantIdSchemeInCodelistTool (),
                                                   aCodelistTools.checkDocumentTypeIdInCodelistTool (),
-                                                  aCodelistTools.checkProcessIdInCodelistTool ())
+                                                  aCodelistTools.checkProcessIdInCodelistTool (),
+                                                  aCodelistTools.getCodelistVersionTool ())
                                           .build ();
 
     // The StdioServerTransportProvider reads from stdin in a background thread.

@@ -34,6 +34,7 @@ capabilities as tools to AI models such as Claude.
 | `check_participant_id_scheme_in_codelist` | Check if a participant ID scheme (ISO 6523) is in the official codelist |
 | `check_document_type_id_in_codelist` | Check if a document type ID is in the official codelist |
 | `check_process_id_in_codelist` | Check if a process ID is in the official codelist |
+| `get_peppol_codelist_version` | Get the version of the Peppol codelists in use |
 
 ## Build
 
@@ -41,7 +42,7 @@ capabilities as tools to AI models such as Claude.
 mvn clean package
 ```
 
-This produces a runnable fat JAR at `target/peppol-mcp-server-1.0.0-SNAPSHOT.jar`.
+This produces a runnable fat JAR at `target/peppol-mcp-server-0.1.0-SNAPSHOT.jar`.
 
 ## Testing
 
@@ -56,7 +57,7 @@ Note: some tests hit the live Peppol test network (SMK).
 ### Level 2 — MCP Inspector (validates MCP protocol)
 
 ```shell
-npx @modelcontextprotocol/inspector java -jar target/peppol-mcp-server-1.0.0-SNAPSHOT.jar
+npx @modelcontextprotocol/inspector java -jar target/peppol-mcp-server-0.1.0-SNAPSHOT.jar
 ```
 
 This opens a browser UI at `http://localhost:5173` where you can invoke
@@ -72,7 +73,7 @@ Add to your Claude Desktop config
       "mcpServers": {
         "peppol": {
           "command": "java",
-          "args": ["-jar", "/absolute/path/to/target/peppol-mcp-server-1.0.0-SNAPSHOT.jar"]
+          "args": ["-jar", "/absolute/path/to/target/peppol-mcp-server-0.1.0-SNAPSHOT.jar"]
         }
       }
     }
@@ -93,5 +94,5 @@ Never use `System.out.println()` in tool implementations.
 
 ## Switching between Peppol production and test network
 
-The network is configured in `PeppolMcpServer.main()` via `EPeppolNetwork.PRODUCTION`
+The network is configured in `PhossPeppolMcpServer.main()` via `EPeppolNetwork.PRODUCTION`
 or `EPeppolNetwork.TEST`.
