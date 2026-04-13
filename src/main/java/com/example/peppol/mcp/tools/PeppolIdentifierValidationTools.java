@@ -5,8 +5,6 @@ import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
 
-import com.helger.peppolid.factory.PeppolIdentifierFactory;
-
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
 import tools.jackson.databind.ObjectMapper;
@@ -28,9 +26,7 @@ public class PeppolIdentifierValidationTools
   {
     try
     {
-      var aPID = PeppolIdentifierFactory.INSTANCE.parseParticipantIdentifier (sPID);
-      if (aPID == null)
-        aPID = PeppolIdentifierFactory.INSTANCE.createParticipantIdentifierWithDefaultScheme (sPID);
+      final var aPID = Helper.parseParticipantId (sPID, false);
       if (aPID != null)
       {
         final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
@@ -44,6 +40,7 @@ public class PeppolIdentifierValidationTools
                                                                 aPID.getURIEncoded ()));
         return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
       }
+
       final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
                                  .writeValueAsString (Map.of ("valid",
                                                               Boolean.FALSE,
@@ -97,9 +94,7 @@ public class PeppolIdentifierValidationTools
   {
     try
     {
-      var aDTID = PeppolIdentifierFactory.INSTANCE.parseDocumentTypeIdentifier (sDTID);
-      if (aDTID == null)
-        aDTID = PeppolIdentifierFactory.INSTANCE.createDocumentTypeIdentifierWithDefaultScheme (sDTID);
+      final var aDTID = Helper.parseDocTypeID (sDTID, false);
       if (aDTID != null)
       {
         final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
@@ -166,9 +161,7 @@ public class PeppolIdentifierValidationTools
   {
     try
     {
-      var aPRID = PeppolIdentifierFactory.INSTANCE.parseProcessIdentifier (sPRID);
-      if (aPRID == null)
-        aPRID = PeppolIdentifierFactory.INSTANCE.createProcessIdentifierWithDefaultScheme (sPRID);
+      final var aPRID = Helper.parseProcessID (sPRID, false);
       if (aPRID != null)
       {
         final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()

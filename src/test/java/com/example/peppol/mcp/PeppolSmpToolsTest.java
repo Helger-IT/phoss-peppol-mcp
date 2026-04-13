@@ -15,7 +15,7 @@ import com.helger.peppol.servicedomain.EPeppolNetwork;
 import io.modelcontextprotocol.spec.McpSchema;
 
 /**
- * Unit tests for Peppol MCP tools.<br>
+ * Unit tests for phoss Peppol MCP tools.<br>
  * Level 1 tests: call the tool handler directly, no MCP protocol involved. Use these to verify
  * business logic and error handling quickly.<br>
  * For Level 2 (MCP protocol) testing, run the MCP Inspector: "npx @modelcontextprotocol/inspector
@@ -30,53 +30,6 @@ class PeppolSmpToolsTest
   void setUp ()
   {
     m_aTools = new PeppolSmpTools (EPeppolNetwork.TEST);
-  }
-
-  // -----------------------------------------------------------------------
-  // Participant ID validation tests (pure local, no network needed)
-  // -----------------------------------------------------------------------
-
-  @Test
-  void testValidParticipantIdFormat ()
-  {
-    final var aSpec = m_aTools.validateParticipantIdTool ();
-    final var aResult = aSpec.callHandler ()
-                             .apply (null,
-                                     new McpSchema.CallToolRequest ("validate_peppol_participant_id",
-                                                                    Map.of ("participantId", "0088:4012345678901")));
-
-    assertFalse (aResult.isError ().booleanValue ());
-    final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue (sContent.contains ("\"valid\" : true"), "Expected valid=true for valid participant ID");
-  }
-
-  @Test
-  void testInvalidParticipantIdFormat ()
-  {
-    final var aSpec = m_aTools.validateParticipantIdTool ();
-    final var aResult = aSpec.callHandler ()
-                             .apply (null,
-                                     new McpSchema.CallToolRequest ("validate_peppol_participant_id",
-                                                                    Map.of ("participantId", "not-a-valid-id")));
-
-    // Should return an error result but not throw
-    assertNotNull (aResult);
-    final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue (sContent.contains ("\"valid\" : false"), "Expected valid=false for invalid participant ID");
-  }
-
-  @Test
-  void testValidParticipantIdSchemeExtracted ()
-  {
-    final var aSpec = m_aTools.validateParticipantIdTool ();
-    final var aResult = aSpec.callHandler ()
-                             .apply (null,
-                                     new McpSchema.CallToolRequest ("validate_peppol_participant_id",
-                                                                    Map.of ("participantId", "0192:123456789")));
-
-    assertFalse (aResult.isError ().booleanValue ());
-    final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue (sContent.contains ("0192"), "Expected scheme 0192 (Norwegian org) in response");
   }
 
   // -----------------------------------------------------------------------

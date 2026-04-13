@@ -15,10 +15,6 @@ import com.helger.base.functional.IThrowingSupplier;
 import com.helger.peppol.security.PeppolTrustStores;
 import com.helger.peppol.servicedomain.EPeppolNetwork;
 import com.helger.peppol.smp.ESMPTransportProfile;
-import com.helger.peppolid.IDocumentTypeIdentifier;
-import com.helger.peppolid.IParticipantIdentifier;
-import com.helger.peppolid.IProcessIdentifier;
-import com.helger.peppolid.factory.PeppolIdentifierFactory;
 import com.helger.smpclient.peppol.SMPClientReadOnly;
 import com.helger.smpclient.url.PeppolNaptrURLProvider;
 import com.helger.smpclient.url.SMPDNSResolutionException;
@@ -69,45 +65,6 @@ public class PeppolSmpTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  static IParticipantIdentifier parseParticipantId (@NonNull final String sPID)
-  {
-    var aPID = PeppolIdentifierFactory.INSTANCE.parseParticipantIdentifier (sPID);
-    if (aPID == null)
-      aPID = PeppolIdentifierFactory.INSTANCE.createParticipantIdentifierWithDefaultScheme (sPID);
-    if (aPID == null)
-      throw new IllegalArgumentException ("Invalid Peppol Participant ID format '" +
-                                          sPID +
-                                          "'. Expected format is scheme:value, e.g. 0088:4012345678901");
-    return aPID;
-  }
-
-  @NonNull
-  static IDocumentTypeIdentifier parseDocTypeID (@NonNull final String sDTID)
-  {
-    var aDTID = PeppolIdentifierFactory.INSTANCE.parseDocumentTypeIdentifier (sDTID);
-    if (aDTID == null)
-      aDTID = PeppolIdentifierFactory.INSTANCE.createDocumentTypeIdentifierWithDefaultScheme (sDTID);
-    if (aDTID == null)
-      throw new IllegalArgumentException ("Invalid Peppol Document Type ID format '" +
-                                          sDTID +
-                                          "'. Expected format is scheme::value, e.g. busdox-docid-qns::xyz");
-    return aDTID;
-  }
-
-  @NonNull
-  static IProcessIdentifier parseProcessID (@NonNull final String sPRID)
-  {
-    var aPRID = PeppolIdentifierFactory.INSTANCE.parseProcessIdentifier (sPRID);
-    if (aPRID == null)
-      aPRID = PeppolIdentifierFactory.INSTANCE.createProcessIdentifierWithDefaultScheme (sPRID);
-    if (aPRID == null)
-      throw new IllegalArgumentException ("Invalid Peppol Process ID format '" +
-                                          sPRID +
-                                          "'. Expected format is scheme::value, e.g. cenbii-procid-ubl::xyz");
-    return aPRID;
-  }
-
-  @NonNull
   private ParticipantInfo _lookupParticipant (@NonNull final String sPID) throws Exception
   {
     final var ret = new ParticipantInfo ();
@@ -115,7 +72,7 @@ public class PeppolSmpTools
 
     try
     {
-      final var aPID = parseParticipantId (sPID);
+      final var aPID = Helper.parseParticipantId (sPID, true);
       final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
       aSmpClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
                                                            : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
@@ -176,11 +133,11 @@ public class PeppolSmpTools
     ret.setParticipantId (sPID);
     ret.setDocumentTypeId (sDTID);
 
-    final var aPID = parseParticipantId (sPID);
+    final var aPID = Helper.parseParticipantId (sPID, true);
     final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
     aSmpClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
                                                          : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
-    final var aDTID = parseDocTypeID (sDTID);
+    final var aDTID = Helper.parseDocTypeID (sDTID, true);
 
     final var aSignedSM = aSmpClient.getServiceMetadataOrNull (aPID, aDTID, null);
     ret.setSupported (aSignedSM != null);
@@ -245,12 +202,12 @@ public class PeppolSmpTools
                                         @NonNull final String sDTID,
                                         @NonNull final String sPRID) throws Exception
   {
-    final var aPID = parseParticipantId (sPID);
+    final var aPID = Helper.parseParticipantId (sPID, true);
     final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
     aSmpClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
                                                          : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
-    final var aDTID = parseDocTypeID (sDTID);
-    final var aPRID = parseProcessID (sPRID);
+    final var aDTID = Helper.parseDocTypeID (sDTID, true);
+    final var aPRID = Helper.parseProcessID (sPRID, true);
     final var aTP = ESMPTransportProfile.TRANSPORT_PROFILE_PEPPOL_AS4_V2;
     final var aSignedSM = aSmpClient.getServiceMetadataOrNull (aPID, aDTID, null);
 
@@ -319,60 +276,6 @@ public class PeppolSmpTools
       final String sDTID = (String) request.arguments ().get ("documentTypeId");
       final String sPRID = (String) request.arguments ().get ("processId");
       return _executeWithErrorHandling ( () -> _getEndpointUrl (sPID, sDTID, sPRID));
-    });
-  }
-
-  // -------------------------------------------------------------------------
-  // Tool 4: Validate participant ID format
-  // -------------------------------------------------------------------------
-
-  @NonNull
-  private Map <String, Object> _validateParticipantId (@NonNull final String sPID)
-  {
-    try
-    {
-      final IParticipantIdentifier pid = parseParticipantId (sPID);
-      return Map.of ("valid",
-                     Boolean.TRUE,
-                     "scheme",
-                     pid.getScheme (),
-                     "value",
-                     pid.getValue (),
-                     "normalized",
-                     pid.getURIEncoded ());
-    }
-    catch (final Exception ex)
-    {
-      return Map.of ("valid", Boolean.FALSE, "error", ex.getMessage ());
-    }
-  }
-
-  @NonNull
-  public SyncToolSpecification validateParticipantIdTool ()
-  {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("validate_peppol_participant_id")
-                                    .description ("""
-                                        Validates whether a string is a correctly formatted Peppol Participant identifier,
-                                        without performing any network lookup. Use this when a user provides a participant ID
-                                        and you want to check the format before doing a live lookup, or when helping a user
-                                        construct a valid participant ID from a company number or VAT number.
-                                        """)
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("participantId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "String to validate as a Peppol Participant identifier")),
-                                                                            List.of ("participantId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
-                                    .build ();
-
-    return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sPID = (String) request.arguments ().get ("participantId");
-      return _executeWithErrorHandling ( () -> _validateParticipantId (sPID));
     });
   }
 }

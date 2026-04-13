@@ -16,10 +16,10 @@ import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema;
 
 /**
- * Entry point for the Peppol MCP server. The server communicates via stdio (stdin/stdout), which is
- * the standard MCP transport when launched by Claude Desktop or the MCP Inspector. Launch via: java
- * -jar peppol-mcp-server.jar Or configure in Claude Desktop's config: { "mcpServers": { "peppol": {
- * "command": "java", "args": ["-jar", "/path/to/peppol-mcp-server.jar"] } } }
+ * Entry point for the phoss Peppol MCP server. The server communicates via stdio (stdin/stdout),
+ * which is the standard MCP transport when launched by Claude Desktop or the MCP Inspector. Launch
+ * via: java -jar peppol-mcp-server.jar Or configure in Claude Desktop's config: { "mcpServers": {
+ * "peppol": { "command": "java", "args": ["-jar", "/path/to/peppol-mcp-server.jar"] } } }
  */
 public class PeppolMcpServer
 {
@@ -27,7 +27,7 @@ public class PeppolMcpServer
 
   public static void main (final String [] args) throws Exception
   {
-    LOG.info ("Starting Peppol MCP Server...");
+    LOG.info ("Starting phoss Peppol MCP Server " + CPhossPeppolMCPVersion.BUILD_VERSION + " ...");
 
     // Instantiate tool providers
     final EPeppolNetwork eNetwork = EPeppolNetwork.PRODUCTION;
@@ -38,17 +38,17 @@ public class PeppolMcpServer
 
     // Build and start the MCP server
     final McpSyncServer server = McpServer.sync (new StdioServerTransportProvider (McpJsonDefaults.getMapper ()))
-                                          .serverInfo ("peppol-mcp-server", "1.0.0")
+                                          .serverInfo ("phoss-peppol-mcp-server", CPhossPeppolMCPVersion.BUILD_VERSION)
                                           .capabilities (McpSchema.ServerCapabilities.builder ()
                                                                                      // expose tools
                                                                                      // to the AI
                                                                                      .tools (Boolean.TRUE)
                                                                                      .build ())
-                                          // Register all Peppol tools
-                                          .tools (aSmpTools.lookupParticipantTool (),
+                                          .tools (// Register all Peppol SMP tools
+                                                  aSmpTools.lookupParticipantTool (),
                                                   aSmpTools.checkDocumentTypeSupportTool (),
                                                   aSmpTools.getEndpointUrlTool (),
-                                                  aSmpTools.validateParticipantIdTool (),
+                                                  // Register all Peppol Directory tools
                                                   aDirectoryTools.searchParticipantsByNameTool (),
                                                   // Syntactic validation tools
                                                   aValidationTools.validateParticipantIdSyntaxTool (),
@@ -66,6 +66,6 @@ public class PeppolMcpServer
 
     server.close ();
 
-    LOG.info ("Peppol MCP Server stopped.");
+    LOG.info ("phoss Peppol MCP Server stopped.");
   }
 }

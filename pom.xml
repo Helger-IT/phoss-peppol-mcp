@@ -14,8 +14,8 @@
   <version>1.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>Peppol MCP Server</name>
-  <description>MCP server exposing Peppol SMP/SML lookup tools to AI models</description>
+  <name>phoss Peppol MCP Server</name>
+  <description>phoss Peppol MCP server exposing Peppol SMP/SML lookup tools to AI models</description>
 
   <properties>
     <jackson.version>3.1.1</jackson.version>
@@ -77,6 +77,25 @@
   </dependencies>
 
   <build>
+    <resources>
+      <!-- Don't specify the targetPath because this leads to a broken JAR file 
+        in combination with the bundle plugin (absolute file paths in ZIP file) -->
+      <resource>
+        <directory>${basedir}/src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>**/*.properties</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>${basedir}/src/main/resources</directory>
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>**/*.properties</exclude>
+        </excludes>
+      </resource>
+    </resources>
+  
     <plugins>
       <!-- Produce a runnable fat JAR -->
       <plugin>

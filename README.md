@@ -1,6 +1,6 @@
-# peppol-mcp-server
+# phoss-peppol-mcp-server
 
-An MCP (Model Context Protocol) server that exposes Peppol network lookup
+A phoss Peppol MCP (Model Context Protocol) server that exposes Peppol network lookup
 capabilities as tools to AI models such as Claude.
 
 ## Tools exposed
