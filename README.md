@@ -109,5 +109,22 @@ Never use `System.out.println()` in tool implementations.
 
 ## Switching between Peppol production and test network
 
-The network is configured in `PhossPeppolMcpServer.main()` via `EPeppolNetwork.PRODUCTION`
-or `EPeppolNetwork.TEST`.
+By default the server uses the Peppol production network. Pass `--network=test`
+to use the test network (SMK/SML):
+
+```shell
+java -jar target/peppol-mcp-server-full.jar --network=test
+```
+
+Claude Desktop config for the test network:
+
+    {
+      "mcpServers": {
+        "peppol-test": {
+          "command": "java",
+          "args": ["-jar", "/absolute/path/to/target/peppol-mcp-server-full.jar", "--network=test"]
+        }
+      }
+    }
+
+Other CLI options: `--help`, `--version`.
