@@ -18,12 +18,24 @@ import io.modelcontextprotocol.spec.McpSchema;
 /**
  * Entry point for the phoss Peppol MCP server. The server communicates via stdio (stdin/stdout),
  * which is the standard MCP transport when launched by Claude Desktop or the MCP Inspector. Launch
- * via: java -jar peppol-mcp-server.jar Or configure in Claude Desktop's config: { "mcpServers": {
- * "peppol": { "command": "java", "args": ["-jar", "/path/to/peppol-mcp-server.jar"] } } }
+ * via:<br>
+ * java -jar peppol-mcp-server.jar<br>
+ * Or configure in Claude Desktop's config:<br>
+ *
+ * <pre>
+ * {
+ *   "mcpServers": {
+ *     "peppol": {
+ *       "command": "java",
+ *       "args": ["-jar", "/path/to/peppol-mcp-server.jar"]
+ *     }
+ *   }
+ * }
+ * </pre>
  */
-public class PeppolMcpServer
+public class PhossPeppolMcpServer
 {
-  private static final Logger LOG = LoggerFactory.getLogger (PeppolMcpServer.class);
+  private static final Logger LOG = LoggerFactory.getLogger (PhossPeppolMcpServer.class);
 
   public static void main (final String [] args) throws Exception
   {
