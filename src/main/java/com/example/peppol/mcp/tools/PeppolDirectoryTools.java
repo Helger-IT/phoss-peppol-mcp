@@ -17,8 +17,10 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.example.peppol.mcp.CPhossPeppolMcp;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.base.string.StringHelper;
+import com.helger.http.CHttpHeader;
 import com.helger.peppol.servicedomain.EPeppolNetwork;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
@@ -66,7 +68,8 @@ public class PeppolDirectoryTools
 
       final var aRequest = HttpRequest.newBuilder ()
                                       .uri (URI.create (aSB.toString ()))
-                                      .header ("Accept", "application/json")
+                                      .header (CHttpHeader.ACCEPT, "application/json")
+                                      .header (CHttpHeader.USER_AGENT, CPhossPeppolMcp.USER_AGENT_PART)
                                       .GET ()
                                       .build ();
 

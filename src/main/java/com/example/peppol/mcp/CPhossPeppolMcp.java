@@ -32,7 +32,8 @@ import com.helger.io.resource.ClassPathResource;
 @Immutable
 public final class CPhossPeppolMcp
 {
-  public static final String APP_NAME = "phoss Peppol MCP Server";
+  public static final String APP_NAME = "phoss-peppol-mcp-server";
+  public static final String APP_TITLE = "phoss Peppol MCP Server";
 
   /** Current version - from properties file */
   public static final String BUILD_VERSION;
@@ -65,6 +66,8 @@ public final class CPhossPeppolMcp
     }
     BUILD_TIMESTAMP = sProjectTimestamp;
   }
+
+  public static final String USER_AGENT_PART = APP_NAME + "/" + BUILD_VERSION + " (" + APP_TITLE + ")";
 
   private CPhossPeppolMcp ()
   {}

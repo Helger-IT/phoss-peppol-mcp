@@ -45,9 +45,7 @@ public class PeppolSmpTools
     // Extend default user agent
     aClient.withHttpClientSettings (hcs -> hcs.setUserAgent (hcs.getUserAgent () +
                                                              " " +
-                                                             CPhossPeppolMcp.APP_NAME +
-                                                             "/" +
-                                                             CPhossPeppolMcp.BUILD_VERSION));
+                                                             CPhossPeppolMcp.USER_AGENT_PART));
     aClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
                                                       : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
     return aClient;
