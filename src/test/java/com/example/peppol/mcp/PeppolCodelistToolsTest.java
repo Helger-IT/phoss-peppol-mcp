@@ -56,6 +56,16 @@ class PeppolCodelistToolsTest
   }
 
   @NonNull
+  private CallToolResult _callSPISUseCase (@NonNull final String sInput)
+  {
+    return m_aTools.checkSPISUseCaseIdInCodelistTool ()
+                   .callHandler ()
+                   .apply (null,
+                           new McpSchema.CallToolRequest ("check_spis_use_case_id_in_codelist",
+                                                          Map.of ("useCaseId", sInput)));
+  }
+
+  @NonNull
   private static String _text (@NonNull final CallToolResult aResult)
   {
     assertNotNull (aResult.content ());
@@ -80,6 +90,7 @@ class PeppolCodelistToolsTest
     assertTrue (sContent.contains ("\"participantIdentifierSchemeCodelistVersion\""));
     assertTrue (sContent.contains ("\"documentTypeCodelistVersion\""));
     assertTrue (sContent.contains ("\"processCodelistVersion\""));
+    assertTrue (sContent.contains ("\"spisUseCaseCodelistVersion\""));
   }
 
   // -----------------------------------------------------------------------
@@ -230,5 +241,204 @@ class PeppolCodelistToolsTest
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"inCodelist\" : false"));
+  }
+
+  // -----------------------------------------------------------------------
+  // SPIS Use Case identifier codelist
+  // -----------------------------------------------------------------------
+
+  @Test
+  void testSPISUseCaseKnownMLS ()
+  {
+    final var aResult = _callSPISUseCase ("MLS");
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"inCodelist\" : true"));
+    assertTrue (sContent.contains ("\"state\" : \"act\""));
+    assertTrue (sContent.contains ("\"initialRelease\""));
+  }
+
+  @Test
+  void testSPISUseCaseUnknown ()
+  {
+    final var aResult = _callSPISUseCase ("NONEXISTENT");
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"inCodelist\" : false"));
+  }
+
+  // -----------------------------------------------------------------------
+  // List participant identifier schemes
+  // -----------------------------------------------------------------------
+
+  @Test
+  void testListParticipantSchemesAll ()
+  {
+    final var aResult = m_aTools.listParticipantIdSchemesTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_participant_id_schemes", Map.of ()));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"entries\""));
+    assertTrue (sContent.contains ("\"iso6523Code\""));
+  }
+
+  @Test
+  void testListParticipantSchemesFilterByState ()
+  {
+    final var aResult = m_aTools.listParticipantIdSchemesTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_participant_id_schemes",
+                                                                       Map.of ("state", "act")));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalEntries\""));
+    // All returned entries should be active
+    assertFalse (sContent.contains ("\"state\" : \"dep\""));
+    assertFalse (sContent.contains ("\"state\" : \"rem\""));
+  }
+
+  @Test
+  void testListParticipantSchemesFilterByCountry ()
+  {
+    final var aResult = m_aTools.listParticipantIdSchemesTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_participant_id_schemes",
+                                                                       Map.of ("countryCode", "NO")));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"countryCode\" : \"NO\""));
+  }
+
+  // -----------------------------------------------------------------------
+  // List document type identifiers
+  // -----------------------------------------------------------------------
+
+  @Test
+  void testListDocumentTypeIdsAll ()
+  {
+    final var aResult = m_aTools.listDocumentTypeIdsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_document_type_ids", Map.of ()));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"entries\""));
+    assertTrue (sContent.contains ("\"commonName\""));
+  }
+
+  @Test
+  void testListDocumentTypeIdsFilterByState ()
+  {
+    final var aResult = m_aTools.listDocumentTypeIdsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_document_type_ids",
+                                                                       Map.of ("state", "act")));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertFalse (sContent.contains ("\"state\" : \"dep\""));
+    assertFalse (sContent.contains ("\"state\" : \"rem\""));
+  }
+
+  // -----------------------------------------------------------------------
+  // List process identifiers
+  // -----------------------------------------------------------------------
+
+  @Test
+  void testListProcessIdsAll ()
+  {
+    final var aResult = m_aTools.listProcessIdsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_process_ids", Map.of ()));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"entries\""));
+    assertTrue (sContent.contains ("\"scheme\""));
+  }
+
+  @Test
+  void testListProcessIdsFilterByState ()
+  {
+    final var aResult = m_aTools.listProcessIdsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_process_ids",
+                                                                       Map.of ("state", "act")));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertFalse (sContent.contains ("\"state\" : \"dep\""));
+    assertFalse (sContent.contains ("\"state\" : \"rem\""));
+  }
+
+  // -----------------------------------------------------------------------
+  // List SPIS Use Case identifiers
+  // -----------------------------------------------------------------------
+
+  @Test
+  void testListSPISUseCaseIdsAll ()
+  {
+    final var aResult = m_aTools.listSPISUseCaseIdsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_spis_use_case_ids", Map.of ()));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"entries\""));
+    assertTrue (sContent.contains ("\"useCaseId\" : \"MLS\""));
+  }
+
+  @Test
+  void testListSPISUseCaseIdsFilterByState ()
+  {
+    final var aResult = m_aTools.listSPISUseCaseIdsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_spis_use_case_ids",
+                                                                       Map.of ("state", "act")));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"useCaseId\" : \"MLS\""));
+  }
+
+  // -----------------------------------------------------------------------
+  // Invalid state filter
+  // -----------------------------------------------------------------------
+
+  @Test
+  void testInvalidStateFilter ()
+  {
+    final var aResult = m_aTools.listParticipantIdSchemesTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_participant_id_schemes",
+                                                                       Map.of ("state", "invalid")));
+
+    assertTrue (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("Invalid state filter"));
   }
 }

@@ -27,14 +27,24 @@ capabilities as tools to AI models such as Claude.
 | `validate_document_type_id_syntax` | Validate document type identifier format |
 | `validate_process_id_syntax` | Validate process identifier format |
 
-### Codelist lookup tools (local, no network)
+### Codelist check tools (local, no network)
 
 | Tool | Description |
 |------|-------------|
 | `check_participant_id_scheme_in_codelist` | Check if a participant ID scheme (ISO 6523) is in the official codelist |
 | `check_document_type_id_in_codelist` | Check if a document type ID is in the official codelist |
 | `check_process_id_in_codelist` | Check if a process ID is in the official codelist |
-| `get_peppol_codelist_version` | Get the version of the Peppol codelists in use |
+| `check_spis_use_case_id_in_codelist` | Check if a SPIS Use Case ID (e.g. MLS) is in the official codelist |
+
+### Codelist listing tools (local, no network)
+
+| Tool | Description |
+|------|-------------|
+| `list_participant_id_schemes` | List all participant ID schemes, optionally filtered by state and/or country |
+| `list_document_type_ids` | List all document type IDs, optionally filtered by state |
+| `list_process_ids` | List all process IDs, optionally filtered by state |
+| `list_spis_use_case_ids` | List all SPIS Use Case IDs, optionally filtered by state |
+| `get_peppol_codelist_version` | Get the version of all Peppol codelists in use |
 
 ## Build
 

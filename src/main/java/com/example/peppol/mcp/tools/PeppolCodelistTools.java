@@ -1,31 +1,61 @@
 package com.example.peppol.mcp.tools;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
+import com.helger.base.string.StringHelper;
 import com.helger.peppolid.IProcessIdentifier;
+import com.helger.peppolid.peppol.EPeppolCodeListItemState;
 import com.helger.peppolid.peppol.doctype.EPredefinedDocumentTypeIdentifier;
 import com.helger.peppolid.peppol.doctype.IPeppolPredefinedDocumentTypeIdentifier;
 import com.helger.peppolid.peppol.doctype.PredefinedDocumentTypeIdentifierManager;
 import com.helger.peppolid.peppol.pidscheme.EPredefinedParticipantIdentifierScheme;
+import com.helger.peppolid.peppol.pidscheme.IPeppolParticipantIdentifierScheme;
 import com.helger.peppolid.peppol.pidscheme.PeppolParticipantIdentifierSchemeManager;
 import com.helger.peppolid.peppol.process.EPredefinedProcessIdentifier;
 import com.helger.peppolid.peppol.process.IPeppolPredefinedProcessIdentifier;
 import com.helger.peppolid.peppol.process.PredefinedProcessIdentifierManager;
+import com.helger.peppolid.peppol.spisusecase.EPredefinedSPISUseCaseIdentifier;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
 
 /**
- * MCP tools for checking whether Peppol identifiers are present in the official Peppol codelists.
- * These tools go beyond syntactic validation: they verify that a given identifier is an officially
- * registered value in the Peppol code lists.
+ * MCP tools for checking whether Peppol identifiers are present in the official Peppol codelists,
+ * and for listing all codelist entries. These tools go beyond syntactic validation: they verify
+ * that a given identifier is an officially registered value in the Peppol code lists.
  */
 public final class PeppolCodelistTools
 {
+  @Nullable
+  private static EPeppolCodeListItemState _parseStateFilter (@Nullable final String sState)
+  {
+    if (sState == null || sState.isBlank ())
+      return null;
+
+    final var eState = EPeppolCodeListItemState.getFromIDOrNull (sState);
+    if (eState != null)
+      return eState;
+
+    // Also accept the enum name directly (ACTIVE, DEPRECATED, REMOVED)
+    try
+    {
+      return EPeppolCodeListItemState.valueOf (sState.toUpperCase (Locale.US));
+    }
+    catch (final IllegalArgumentException ex)
+    {
+      throw new IllegalArgumentException ("Invalid state filter '" +
+                                          sState +
+                                          "'. Valid values: act, dep, rem (or ACTIVE, DEPRECATED, REMOVED)");
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Tool 1: Check participant identifier scheme in codelist
   // -------------------------------------------------------------------------
@@ -208,7 +238,68 @@ public final class PeppolCodelistTools
   }
 
   // -------------------------------------------------------------------------
-  // Tool 4: Get codelist version
+  // Tool 4: Check SPIS Use Case identifier in codelist
+  // -------------------------------------------------------------------------
+
+  @NonNull
+  private Map <String, Object> _checkSPISUseCaseIdInCodelist (@NonNull final String sUseCaseID)
+  {
+    EPredefinedSPISUseCaseIdentifier aFound = null;
+    for (final var e : EPredefinedSPISUseCaseIdentifier.values ())
+      if (e.getUseCaseID ().equals (sUseCaseID))
+      {
+        aFound = e;
+        break;
+      }
+
+    final Map <String, Object> aResult = new LinkedHashMap <> ();
+    aResult.put ("useCaseId", sUseCaseID);
+    aResult.put ("inCodelist", Boolean.valueOf (aFound != null));
+    aResult.put ("codeListVersion", EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION);
+
+    if (aFound != null)
+    {
+      aResult.put ("state", aFound.getState ().getID ());
+      aResult.put ("initialRelease", aFound.getInitialRelease ().toString ());
+      if (aFound.getDeprecationRelease () != null)
+        aResult.put ("deprecationRelease", aFound.getDeprecationRelease ().toString ());
+      if (aFound.getRemovalDate () != null)
+        aResult.put ("removalDate", aFound.getRemovalDate ().toString ());
+    }
+
+    return aResult;
+  }
+
+  @NonNull
+  public SyncToolSpecification checkSPISUseCaseIdInCodelistTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("check_spis_use_case_id_in_codelist")
+                                    .description ("""
+                                        Checks whether a SPIS (Service Provider Information Service) Use Case \
+                                        identifier is present in the official Peppol SPIS Use Case codelist. \
+                                        Returns the state (active/deprecated/removed) if found. \
+                                        Example: 'MLS' for Message Level Status.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("useCaseId",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "SPIS Use Case identifier to look up, e.g. 'MLS'")),
+                                                                            List.of ("useCaseId"),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final String sUseCaseID = (String) request.arguments ().get ("useCaseId");
+      return Helper.executeWithErrorHandling ( () -> _checkSPISUseCaseIdInCodelist (sUseCaseID));
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Tool 5: Get codelist version
   // -------------------------------------------------------------------------
 
   @NonNull
@@ -219,6 +310,7 @@ public final class PeppolCodelistTools
                  EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
     aResult.put ("documentTypeCodelistVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
     aResult.put ("processCodelistVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
+    aResult.put ("spisUseCaseCodelistVersion", EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION);
     return aResult;
   }
 
@@ -230,7 +322,7 @@ public final class PeppolCodelistTools
                                     .description ("""
                                         Returns the version of the Peppol codelists currently in use. \
                                         This includes the version of the Participant identifier scheme, \
-                                        Document Type, and Process identifier codelists. \
+                                        Document Type, Process identifier, and SPIS Use Case codelists. \
                                         No input parameters required.""")
                                     .inputSchema (new McpSchema.JsonSchema ("object",
                                                                             Map.of (),
@@ -243,5 +335,257 @@ public final class PeppolCodelistTools
     return new SyncToolSpecification (aTool,
                                       (exchange, request) -> Helper.executeWithErrorHandling (
                                                                                               this::_getCodelistVersion));
+  }
+
+  // -------------------------------------------------------------------------
+  // Tool 6: List all participant identifier schemes
+  // -------------------------------------------------------------------------
+
+  @NonNull
+  private Map <String, Object> _listParticipantIdSchemes (@Nullable final String sState,
+                                                          @Nullable final String sCountryCode)
+  {
+    final var eStateFilter = _parseStateFilter (sState);
+    final var aEntries = new ArrayList <Map <String, Object>> ();
+
+    for (final IPeppolParticipantIdentifierScheme aScheme : PeppolParticipantIdentifierSchemeManager.getAllSchemes ())
+    {
+      if (eStateFilter != null && aScheme.getState () != eStateFilter)
+        continue;
+      if (StringHelper.isNotEmpty (sCountryCode) && !sCountryCode.equalsIgnoreCase (aScheme.getCountryCode ()))
+        continue;
+
+      final Map <String, Object> aEntry = new LinkedHashMap <> ();
+      aEntry.put ("iso6523Code", aScheme.getISO6523Code ());
+      aEntry.put ("schemeID", aScheme.getSchemeID ());
+      aEntry.put ("schemeName", aScheme.getSchemeName ());
+      aEntry.put ("schemeAgency", aScheme.getSchemeAgency ());
+      aEntry.put ("countryCode", aScheme.getCountryCode ());
+      aEntry.put ("state", aScheme.getState ().getID ());
+      if (aScheme.getRemovalDate () != null)
+        aEntry.put ("removalDate", aScheme.getRemovalDate ().toString ());
+      aEntries.add (aEntry);
+    }
+
+    final Map <String, Object> aResult = new LinkedHashMap <> ();
+    aResult.put ("codeListVersion", EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
+    aResult.put ("totalEntries", Integer.valueOf (aEntries.size ()));
+    aResult.put ("entries", aEntries);
+    return aResult;
+  }
+
+  @NonNull
+  public SyncToolSpecification listParticipantIdSchemesTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("list_participant_id_schemes")
+                                    .description ("""
+                                        Lists all Participant identifier schemes (ISO 6523 codes) from the \
+                                        official Peppol codelist. Can be filtered by state and/or country code. \
+                                        Use this to discover which identifier schemes are available for a \
+                                        specific country, or to see all active/deprecated/removed schemes.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("state",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all entries are returned."),
+                                                                                    "countryCode",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional ISO 3166-1 alpha-2 country code to filter by, e.g. 'DE', 'AT', 'NO'")),
+                                                                            List.of (),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final var aArgs = request.arguments ();
+      final String sState = (String) aArgs.get ("state");
+      final String sCountryCode = (String) aArgs.get ("countryCode");
+      return Helper.executeWithErrorHandling ( () -> _listParticipantIdSchemes (sState, sCountryCode));
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Tool 7: List all document type identifiers
+  // -------------------------------------------------------------------------
+
+  @NonNull
+  private Map <String, Object> _listDocumentTypeIds (@Nullable final String sState)
+  {
+    final var eStateFilter = _parseStateFilter (sState);
+    final var aEntries = new ArrayList <Map <String, Object>> ();
+
+    for (final IPeppolPredefinedDocumentTypeIdentifier aDT : PredefinedDocumentTypeIdentifierManager.getAllDocumentTypeIdentifiers ())
+    {
+      if (eStateFilter != null && aDT.getState () != eStateFilter)
+        continue;
+
+      final Map <String, Object> aEntry = new LinkedHashMap <> ();
+      aEntry.put ("documentTypeId", aDT.getScheme () + "::" + aDT.getValue ());
+      aEntry.put ("commonName", aDT.getCommonName ());
+      aEntry.put ("state", aDT.getState ().getID ());
+      aEntry.put ("bisVersion", Integer.valueOf (aDT.getBISVersion ()));
+      aEntry.put ("domainCommunity", aDT.getDomainCommunity ());
+      if (aDT.getRemovalDate () != null)
+        aEntry.put ("removalDate", aDT.getRemovalDate ().toString ());
+      aEntries.add (aEntry);
+    }
+
+    final Map <String, Object> aResult = new LinkedHashMap <> ();
+    aResult.put ("codeListVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
+    aResult.put ("totalEntries", Integer.valueOf (aEntries.size ()));
+    aResult.put ("entries", aEntries);
+    return aResult;
+  }
+
+  @NonNull
+  public SyncToolSpecification listDocumentTypeIdsTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("list_document_type_ids")
+                                    .description ("""
+                                        Lists all Document Type identifiers from the official Peppol codelist. \
+                                        Can be filtered by state. Use this to discover which document types \
+                                        (invoices, credit notes, orders, etc.) are defined in the Peppol network. \
+                                        Returns common name, BIS version, domain community, and state for each entry.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("state",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all entries are returned.")),
+                                                                            List.of (),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final String sState = (String) request.arguments ().get ("state");
+      return Helper.executeWithErrorHandling ( () -> _listDocumentTypeIds (sState));
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Tool 8: List all process identifiers
+  // -------------------------------------------------------------------------
+
+  @NonNull
+  private Map <String, Object> _listProcessIds (@Nullable final String sState)
+  {
+    final var eStateFilter = _parseStateFilter (sState);
+    final var aEntries = new ArrayList <Map <String, Object>> ();
+
+    for (final IPeppolPredefinedProcessIdentifier aProc : PredefinedProcessIdentifierManager.getAllProcessIdentifiers ())
+    {
+      if (eStateFilter != null && aProc.getState () != eStateFilter)
+        continue;
+
+      final Map <String, Object> aEntry = new LinkedHashMap <> ();
+      aEntry.put ("processId", aProc.getScheme () + "::" + aProc.getValue ());
+      aEntry.put ("scheme", aProc.getScheme ());
+      aEntry.put ("value", aProc.getValue ());
+      aEntry.put ("state", aProc.getState ().getID ());
+      aEntries.add (aEntry);
+    }
+
+    final Map <String, Object> aResult = new LinkedHashMap <> ();
+    aResult.put ("codeListVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
+    aResult.put ("totalEntries", Integer.valueOf (aEntries.size ()));
+    aResult.put ("entries", aEntries);
+    return aResult;
+  }
+
+  @NonNull
+  public SyncToolSpecification listProcessIdsTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("list_process_ids")
+                                    .description ("""
+                                        Lists all Process identifiers from the official Peppol codelist. \
+                                        Can be filtered by state. Use this to discover which business \
+                                        processes (billing, ordering, despatch advice, etc.) are defined \
+                                        in the Peppol network.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("state",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all entries are returned.")),
+                                                                            List.of (),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final String sState = (String) request.arguments ().get ("state");
+      return Helper.executeWithErrorHandling ( () -> _listProcessIds (sState));
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Tool 9: List all SPIS Use Case identifiers
+  // -------------------------------------------------------------------------
+
+  @NonNull
+  private Map <String, Object> _listSPISUseCaseIds (@Nullable final String sState)
+  {
+    final var eStateFilter = _parseStateFilter (sState);
+    final var aEntries = new ArrayList <Map <String, Object>> ();
+
+    for (final var aUseCase : EPredefinedSPISUseCaseIdentifier.values ())
+    {
+      if (eStateFilter != null && aUseCase.getState () != eStateFilter)
+        continue;
+
+      final Map <String, Object> aEntry = new LinkedHashMap <> ();
+      aEntry.put ("useCaseId", aUseCase.getUseCaseID ());
+      aEntry.put ("state", aUseCase.getState ().getID ());
+      aEntry.put ("initialRelease", aUseCase.getInitialRelease ().toString ());
+      if (aUseCase.getDeprecationRelease () != null)
+        aEntry.put ("deprecationRelease", aUseCase.getDeprecationRelease ().toString ());
+      if (aUseCase.getRemovalDate () != null)
+        aEntry.put ("removalDate", aUseCase.getRemovalDate ().toString ());
+      aEntries.add (aEntry);
+    }
+
+    final Map <String, Object> aResult = new LinkedHashMap <> ();
+    aResult.put ("codeListVersion", EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION);
+    aResult.put ("totalEntries", Integer.valueOf (aEntries.size ()));
+    aResult.put ("entries", aEntries);
+    return aResult;
+  }
+
+  @NonNull
+  public SyncToolSpecification listSPISUseCaseIdsTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("list_spis_use_case_ids")
+                                    .description ("""
+                                        Lists all SPIS (Service Provider Information Service) Use Case \
+                                        identifiers from the official Peppol codelist. Can be filtered by state. \
+                                        Use this to discover which SPIS use cases (e.g. MLS - Mandatory Log \
+                                        Service) are defined in the Peppol network.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("state",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all entries are returned.")),
+                                                                            List.of (),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final String sState = (String) request.arguments ().get ("state");
+      return Helper.executeWithErrorHandling ( () -> _listSPISUseCaseIds (sState));
+    });
   }
 }

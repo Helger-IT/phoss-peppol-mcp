@@ -66,10 +66,16 @@ public class PhossPeppolMcpServer
                                                   aValidationTools.validateParticipantIdSyntaxTool (),
                                                   aValidationTools.validateDocumentTypeIdSyntaxTool (),
                                                   aValidationTools.validateProcessIdSyntaxTool (),
-                                                  // Codelist lookup tools
+                                                  // Codelist check tools
                                                   aCodelistTools.checkParticipantIdSchemeInCodelistTool (),
                                                   aCodelistTools.checkDocumentTypeIdInCodelistTool (),
                                                   aCodelistTools.checkProcessIdInCodelistTool (),
+                                                  aCodelistTools.checkSPISUseCaseIdInCodelistTool (),
+                                                  // Codelist listing tools
+                                                  aCodelistTools.listParticipantIdSchemesTool (),
+                                                  aCodelistTools.listDocumentTypeIdsTool (),
+                                                  aCodelistTools.listProcessIdsTool (),
+                                                  aCodelistTools.listSPISUseCaseIdsTool (),
                                                   aCodelistTools.getCodelistVersionTool ())
                                           .build ();
 
