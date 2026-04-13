@@ -7,15 +7,23 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.helger.base.enforce.ValueEnforcer;
+import com.helger.base.string.StringHelper;
+import com.helger.peppol.servicedomain.EPeppolNetwork;
+
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -28,25 +36,33 @@ public class PeppolDirectoryTools
 {
   private static final Logger LOG = LoggerFactory.getLogger (PeppolDirectoryTools.class);
   private static final ObjectMapper MAPPER = new ObjectMapper ();
-  private static final String DIRECTORY_API = "https://directory.peppol.eu/search/1.0/json";
+
+  private final EPeppolNetwork m_eNetwork;
   private final HttpClient m_aHttpClient = HttpClient.newHttpClient ();
+
+  public PeppolDirectoryTools (@NonNull final EPeppolNetwork eNetwork)
+  {
+    ValueEnforcer.notNull (eNetwork, "Network");
+    m_eNetwork = eNetwork;
+  }
 
   // -------------------------------------------------------------------------
   // Tool: Search participants by company name
   // -------------------------------------------------------------------------
 
-  private McpSchema.@NonNull CallToolResult _executeSearch (@NonNull final String sCompanyName,
-                                                   final String sCountryCode,
-                                                   final int nMaxResults)
+  private @NonNull CallToolResult _executeSearch (@NonNull final String sCompanyName,
+                                                  @Nullable final String sCountryCode,
+                                                  final int nMaxResults)
   {
     try
     {
-      final var aSB = new StringBuilder (DIRECTORY_API);
+      final var aSB = new StringBuilder (m_eNetwork.getDirectoryURL () + "/search/1.0/json");
       aSB.append ("?name=").append (URLEncoder.encode (sCompanyName, StandardCharsets.UTF_8));
-      aSB.append ("&resultPageCount=").append (Math.min (nMaxResults, 100));
-
-      if (sCountryCode != null && !sCountryCode.isBlank ())
-        aSB.append ("&country=").append (URLEncoder.encode (sCountryCode.toUpperCase (), StandardCharsets.UTF_8));
+      if (nMaxResults > 0)
+        aSB.append ("&resultPageCount=").append (nMaxResults);
+      if (StringHelper.isNotEmpty (sCountryCode))
+        aSB.append ("&country=")
+           .append (URLEncoder.encode (sCountryCode.toUpperCase (Locale.US), StandardCharsets.UTF_8));
 
       final var aRequest = HttpRequest.newBuilder ()
                                       .uri (URI.create (aSB.toString ()))
@@ -65,7 +81,7 @@ public class PeppolDirectoryTools
       if (aRoot.has ("matches"))
       {
         aRoot.get ("matches").forEach (match -> {
-          final Map <String, Object> aEntry = new java.util.LinkedHashMap <> ();
+          final Map <String, Object> aEntry = new LinkedHashMap <> ();
 
           if (match.has ("participantID"))
             aEntry.put ("participantId", match.get ("participantID").asString ());

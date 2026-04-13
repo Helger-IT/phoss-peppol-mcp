@@ -7,9 +7,12 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 
 import com.helger.peppolid.IProcessIdentifier;
+import com.helger.peppolid.peppol.doctype.EPredefinedDocumentTypeIdentifier;
 import com.helger.peppolid.peppol.doctype.IPeppolPredefinedDocumentTypeIdentifier;
 import com.helger.peppolid.peppol.doctype.PredefinedDocumentTypeIdentifierManager;
+import com.helger.peppolid.peppol.pidscheme.EPredefinedParticipantIdentifierScheme;
 import com.helger.peppolid.peppol.pidscheme.PeppolParticipantIdentifierSchemeManager;
+import com.helger.peppolid.peppol.process.EPredefinedProcessIdentifier;
 import com.helger.peppolid.peppol.process.IPeppolPredefinedProcessIdentifier;
 import com.helger.peppolid.peppol.process.PredefinedProcessIdentifierManager;
 
@@ -46,6 +49,7 @@ public final class PeppolCodelistTools
       final Map <String, Object> aResult = new LinkedHashMap <> ();
       aResult.put ("iso6523Code", sISO6523Code);
       aResult.put ("inCodelist", Boolean.valueOf (aScheme != null));
+      aResult.put ("codeListVersion", EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
 
       if (aScheme != null)
       {
@@ -109,11 +113,13 @@ public final class PeppolCodelistTools
   {
     try
     {
-      final IPeppolPredefinedDocumentTypeIdentifier aDocTypeID = PredefinedDocumentTypeIdentifierManager.getDocumentTypeIdentifierOfID (sDTID);
+      final var aDTID = Helper.parseDocTypeID (sDTID, true);
+      final IPeppolPredefinedDocumentTypeIdentifier aDocTypeID = PredefinedDocumentTypeIdentifierManager.getDocumentTypeIdentifierOfID (aDTID.getURIEncoded ());
 
       final Map <String, Object> aResult = new LinkedHashMap <> ();
-      aResult.put ("documentTypeId", sDTID);
+      aResult.put ("documentTypeId", aDTID.getURIEncoded ());
       aResult.put ("inCodelist", Boolean.valueOf (aDocTypeID != null));
+      aResult.put ("codeListVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
 
       if (aDocTypeID != null)
       {
@@ -177,15 +183,18 @@ public final class PeppolCodelistTools
   // Tool 3: Check process identifier in codelist
   // -------------------------------------------------------------------------
 
-  private @NonNull CallToolResult _checkProcessIdInCodelist (@NonNull final String sPRID)
+  @NonNull
+  private CallToolResult _checkProcessIdInCodelist (@NonNull final String sPRID)
   {
     try
     {
-      final IPeppolPredefinedProcessIdentifier aProcID = PredefinedProcessIdentifierManager.getProcessIdentifierOfID (sPRID);
+      final var aPRID = Helper.parseProcessID (sPRID, true);
+      final IPeppolPredefinedProcessIdentifier aProcID = PredefinedProcessIdentifierManager.getProcessIdentifierOfID (aPRID.getURIEncoded ());
 
       final Map <String, Object> aResult = new LinkedHashMap <> ();
-      aResult.put ("processId", sPRID);
+      aResult.put ("processId", aPRID.getURIEncoded ());
       aResult.put ("inCodelist", Boolean.valueOf (aProcID != null));
+      aResult.put ("codeListVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
 
       if (aProcID != null)
       {

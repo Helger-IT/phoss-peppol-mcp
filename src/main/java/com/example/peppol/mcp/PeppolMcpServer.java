@@ -32,7 +32,7 @@ public class PeppolMcpServer
     // Instantiate tool providers
     final EPeppolNetwork eNetwork = EPeppolNetwork.PRODUCTION;
     final PeppolSmpTools aSmpTools = new PeppolSmpTools (eNetwork);
-    final PeppolDirectoryTools aDirectoryTools = new PeppolDirectoryTools ();
+    final PeppolDirectoryTools aDirectoryTools = new PeppolDirectoryTools (eNetwork);
     final PeppolIdentifierValidationTools aValidationTools = new PeppolIdentifierValidationTools ();
     final PeppolCodelistTools aCodelistTools = new PeppolCodelistTools ();
 
