@@ -27,13 +27,43 @@
     <version>3.0.3</version>
   </parent>
 
-  <groupId>com.example.peppol</groupId>
-  <artifactId>peppol-mcp-server</artifactId>
+  <groupId>com.helger.peppol.mcp</groupId>
+  <artifactId>phoss-peppol-mcp-server</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
-
   <name>phoss Peppol MCP Server</name>
-  <description>phoss Peppol MCP server exposing Peppol SMP/SML lookup tools to AI models</description>
+  <description>phoss Peppol MCP server exposing Peppol functionality to AI models</description>
+  <url>https://github.com/Helger-IT/phoss-peppol-mcp</url>
+  <inceptionYear>2026</inceptionYear>
+
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:https://github.com/Helger-IT/phoss-peppol-mcp.git</connection>
+    <developerConnection>scm:git:https://github.com/Helger-IT/phoss-peppol-mcp.git</developerConnection>
+    <url>https://github.com/Helger-IT/phoss-peppol-mcp</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <organization>
+    <name>Philip Helger</name>
+    <url>https://www.helger.com</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <id>philip</id>
+      <name>Philip Helger</name>
+      <email>ph(at)helger.com</email>
+      <url>https://www.helger.com</url>
+    </developer>
+  </developers>
 
   <properties>
     <jackson.version>3.1.1</jackson.version>
