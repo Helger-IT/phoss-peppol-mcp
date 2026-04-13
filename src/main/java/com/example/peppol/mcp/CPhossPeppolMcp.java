@@ -30,21 +30,23 @@ import com.helger.io.resource.ClassPathResource;
  * @author Philip Helger
  */
 @Immutable
-public final class CPhossPeppolMCPVersion
+public final class CPhossPeppolMcp
 {
+  public static final String APP_NAME = "phoss Peppol MCP Server";
+
   /** Current version - from properties file */
   public static final String BUILD_VERSION;
   /** Build timestamp - from properties file */
   public static final String BUILD_TIMESTAMP;
 
-  private static final Logger LOGGER = LoggerFactory.getLogger (CPhossPeppolMCPVersion.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger (CPhossPeppolMcp.class);
 
   static
   {
     String sProjectVersion = null;
     String sProjectTimestamp = null;
     final NonBlockingProperties aProps = PropertiesHelper.loadProperties (ClassPathResource.getInputStream ("phoss-peppol-mcp-version.properties",
-                                                                                                            CPhossPeppolMCPVersion.class.getClassLoader ()));
+                                                                                                            CPhossPeppolMcp.class.getClassLoader ()));
     if (aProps != null)
     {
       sProjectVersion = aProps.get ("version");
@@ -64,6 +66,6 @@ public final class CPhossPeppolMCPVersion
     BUILD_TIMESTAMP = sProjectTimestamp;
   }
 
-  private CPhossPeppolMCPVersion ()
+  private CPhossPeppolMcp ()
   {}
 }

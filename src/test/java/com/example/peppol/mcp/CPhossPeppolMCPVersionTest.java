@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test class for class {@link CPhossPeppolMCPVersion}
+ * Test class for class {@link CPhossPeppolMcp}
  *
  * @author Philip Helger
  */
@@ -31,11 +31,11 @@ public final class CPhossPeppolMCPVersionTest
   @Test
   void testBasic ()
   {
-    assertNotEquals ("undefined", CPhossPeppolMCPVersion.BUILD_VERSION);
-    assertNotEquals ("undefined", CPhossPeppolMCPVersion.BUILD_TIMESTAMP);
+    assertNotEquals ("undefined", CPhossPeppolMcp.BUILD_VERSION);
+    assertNotEquals ("undefined", CPhossPeppolMcp.BUILD_TIMESTAMP);
 
     // Check variable resolution
-    assertFalse (CPhossPeppolMCPVersion.BUILD_VERSION.contains ("${"));
-    assertFalse (CPhossPeppolMCPVersion.BUILD_TIMESTAMP.contains ("${"));
+    assertFalse (CPhossPeppolMcp.BUILD_VERSION.contains ("${"));
+    assertFalse (CPhossPeppolMcp.BUILD_TIMESTAMP.contains ("${"));
   }
 }

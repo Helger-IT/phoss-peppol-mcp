@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
@@ -71,6 +72,18 @@ class PeppolCodelistToolsTest
     assertNotNull (aResult.content ());
     assertFalse (aResult.content ().isEmpty ());
     return ((McpSchema.TextContent) aResult.content ().get (0)).text ();
+  }
+
+  /**
+   * Build a mutable args map — needed because Map.of () does not allow null values.
+   */
+  @NonNull
+  private static Map <String, Object> _args (@NonNull final Object... aPairs)
+  {
+    final var aMap = new HashMap <String, Object> ();
+    for (int i = 0; i < aPairs.length; i += 2)
+      aMap.put ((String) aPairs[i], aPairs[i + 1]);
+    return aMap;
   }
 
   // -----------------------------------------------------------------------
@@ -160,7 +173,6 @@ class PeppolCodelistToolsTest
   @Test
   void testDocumentTypeKnownBIS3Invoice ()
   {
-    // URI-encoded key: scheme::value
     final var aResult = _callDocumentType ("urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1");
 
     assertFalse (aResult.isError ().booleanValue ());
@@ -174,7 +186,6 @@ class PeppolCodelistToolsTest
   @Test
   void testDocumentTypeKnownBIS3InvoiceFull ()
   {
-    // URI-encoded key: scheme::value
     final var aResult = _callDocumentType ("busdox-docid-qns::urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1");
 
     assertFalse (aResult.isError ().booleanValue ());
@@ -274,7 +285,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testListParticipantSchemesAll ()
+  void testListParticipantSchemesDefaultLimit ()
   {
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
@@ -283,9 +294,10 @@ class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
+    assertTrue (sContent.contains ("\"returnedEntries\""));
+    assertTrue (sContent.contains ("\"limit\" : " + 50));
     assertTrue (sContent.contains ("\"entries\""));
-    assertTrue (sContent.contains ("\"iso6523Code\""));
   }
 
   @Test
@@ -299,8 +311,7 @@ class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"totalEntries\""));
-    // All returned entries should be active
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
     assertFalse (sContent.contains ("\"state\" : \"dep\""));
     assertFalse (sContent.contains ("\"state\" : \"rem\""));
   }
@@ -316,8 +327,42 @@ class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
     assertTrue (sContent.contains ("\"countryCode\" : \"NO\""));
+  }
+
+  @Test
+  void testListParticipantSchemesQuery ()
+  {
+    final var aResult = m_aTools.listParticipantIdSchemesTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_participant_id_schemes",
+                                                                       Map.of ("query", "GLN")));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
+    assertTrue (sContent.contains ("\"schemeID\" : \"GLN\""));
+  }
+
+  @Test
+  void testListParticipantSchemesOffsetAndLimit ()
+  {
+    final var aResult = m_aTools.listParticipantIdSchemesTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_participant_id_schemes",
+                                                                       _args ("offset",
+                                                                              Integer.valueOf (2),
+                                                                              "limit",
+                                                                              Integer.valueOf (3))));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"offset\" : 2"));
+    assertTrue (sContent.contains ("\"limit\" : 3"));
+    assertTrue (sContent.contains ("\"returnedEntries\" : 3"));
   }
 
   // -----------------------------------------------------------------------
@@ -325,7 +370,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testListDocumentTypeIdsAll ()
+  void testListDocumentTypeIdsDefaultLimit ()
   {
     final var aResult = m_aTools.listDocumentTypeIdsTool ()
                                 .callHandler ()
@@ -334,9 +379,8 @@ class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"totalEntries\""));
-    assertTrue (sContent.contains ("\"entries\""));
-    assertTrue (sContent.contains ("\"commonName\""));
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
+    assertTrue (sContent.contains ("\"limit\" : " + 50));
   }
 
   @Test
@@ -350,9 +394,40 @@ class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
     assertFalse (sContent.contains ("\"state\" : \"dep\""));
     assertFalse (sContent.contains ("\"state\" : \"rem\""));
+  }
+
+  @Test
+  void testListDocumentTypeIdsQuery ()
+  {
+    final var aResult = m_aTools.listDocumentTypeIdsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_document_type_ids",
+                                                                       Map.of ("query", "UBL.BE")));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
+    assertTrue (sContent.contains ("UBL.BE"));
+  }
+
+  @Test
+  void testListDocumentTypeIdsDomainCommunity ()
+  {
+    final var aResult = m_aTools.listDocumentTypeIdsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_document_type_ids",
+                                                                       Map.of ("domainCommunity", "PRAC")));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
+    assertTrue (sContent.contains ("\"domainCommunity\" : \"PRAC\""));
+    assertFalse (sContent.contains ("\"domainCommunity\" : \"POAC\""));
   }
 
   // -----------------------------------------------------------------------
@@ -360,7 +435,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testListProcessIdsAll ()
+  void testListProcessIdsDefaultLimit ()
   {
     final var aResult = m_aTools.listProcessIdsTool ()
                                 .callHandler ()
@@ -369,9 +444,8 @@ class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"totalEntries\""));
-    assertTrue (sContent.contains ("\"entries\""));
-    assertTrue (sContent.contains ("\"scheme\""));
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
+    assertTrue (sContent.contains ("\"limit\" : " + 50));
   }
 
   @Test
@@ -385,9 +459,24 @@ class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
     assertFalse (sContent.contains ("\"state\" : \"dep\""));
     assertFalse (sContent.contains ("\"state\" : \"rem\""));
+  }
+
+  @Test
+  void testListProcessIdsQuery ()
+  {
+    final var aResult = m_aTools.listProcessIdsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("list_process_ids",
+                                                                       Map.of ("query", "billing")));
+
+    assertFalse (aResult.isError ().booleanValue ());
+    final String sContent = _text (aResult);
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
+    assertTrue (sContent.contains ("billing"));
   }
 
   // -----------------------------------------------------------------------
@@ -404,7 +493,7 @@ class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
     assertTrue (sContent.contains ("\"entries\""));
     assertTrue (sContent.contains ("\"useCaseId\" : \"MLS\""));
   }
@@ -420,7 +509,7 @@ class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"totalEntries\""));
+    assertTrue (sContent.contains ("\"totalMatchingEntries\""));
     assertTrue (sContent.contains ("\"useCaseId\" : \"MLS\""));
   }
 

@@ -39,7 +39,7 @@ public class PhossPeppolMcpServer
 
   public static void main (final String [] args) throws Exception
   {
-    LOG.info ("Starting phoss Peppol MCP Server " + CPhossPeppolMCPVersion.BUILD_VERSION + " ...");
+    LOG.info ("Starting " + CPhossPeppolMcp.APP_NAME + " " + CPhossPeppolMcp.BUILD_VERSION + " ...");
 
     // Instantiate tool providers
     final EPeppolNetwork eNetwork = EPeppolNetwork.PRODUCTION;
@@ -50,7 +50,7 @@ public class PhossPeppolMcpServer
 
     // Build and start the MCP server
     final McpSyncServer server = McpServer.sync (new StdioServerTransportProvider (McpJsonDefaults.getMapper ()))
-                                          .serverInfo ("phoss-peppol-mcp-server", CPhossPeppolMCPVersion.BUILD_VERSION)
+                                          .serverInfo (CPhossPeppolMcp.APP_NAME, CPhossPeppolMcp.BUILD_VERSION)
                                           .capabilities (McpSchema.ServerCapabilities.builder ()
                                                                                      // expose tools
                                                                                      // to the AI
@@ -85,6 +85,6 @@ public class PhossPeppolMcpServer
 
     server.close ();
 
-    LOG.info ("phoss Peppol MCP Server stopped.");
+    LOG.info (CPhossPeppolMcp.APP_NAME + " stopped.");
   }
 }

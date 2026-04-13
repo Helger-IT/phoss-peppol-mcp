@@ -1,6 +1,6 @@
 # phoss-peppol-mcp-server
 
-A phoss Peppol MCP (Model Context Protocol) server that exposes Peppol network lookup
+A phoss Peppol MCP (Model Context Protocol) server that exposes Peppol Network 
 capabilities as tools to AI models such as Claude.
 
 ## Tools exposed
@@ -38,13 +38,15 @@ capabilities as tools to AI models such as Claude.
 
 ### Codelist listing tools (local, no network)
 
-| Tool | Description |
-|------|-------------|
-| `list_participant_id_schemes` | List all participant ID schemes, optionally filtered by state and/or country |
-| `list_document_type_ids` | List all document type IDs, optionally filtered by state |
-| `list_process_ids` | List all process IDs, optionally filtered by state |
-| `list_spis_use_case_ids` | List all SPIS Use Case IDs, optionally filtered by state |
-| `get_peppol_codelist_version` | Get the version of all Peppol codelists in use |
+All listing tools support text search via `query`, pagination via `offset`/`limit` (default limit: 50), and filtering by `state`.
+
+| Tool | Description | Extra filters |
+|------|-------------|---------------|
+| `list_participant_id_schemes` | List participant ID schemes | `countryCode` |
+| `list_document_type_ids` | List document type IDs | `domainCommunity` (POAC, PRAC, Logistics) |
+| `list_process_ids` | List process IDs | — |
+| `list_spis_use_case_ids` | List SPIS Use Case IDs | — |
+| `get_peppol_codelist_version` | Get the version of all Peppol codelists in use | — |
 
 ## Build
 

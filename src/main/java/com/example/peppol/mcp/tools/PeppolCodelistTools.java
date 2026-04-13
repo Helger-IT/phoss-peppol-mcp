@@ -28,11 +28,14 @@ import io.modelcontextprotocol.spec.McpSchema;
 
 /**
  * MCP tools for checking whether Peppol identifiers are present in the official Peppol codelists,
- * and for listing all codelist entries. These tools go beyond syntactic validation: they verify
- * that a given identifier is an officially registered value in the Peppol code lists.
+ * and for listing all codelist entries. These tools go beyond syntactic validation: they verify that
+ * a given identifier is an officially registered value in the Peppol code lists.
  */
 public final class PeppolCodelistTools
 {
+  /** Default maximum number of entries returned by listing tools. */
+  static final int DEFAULT_LIMIT = 50;
+
   @Nullable
   private static EPeppolCodeListItemState _parseStateFilter (@Nullable final String sState)
   {
@@ -54,6 +57,52 @@ public final class PeppolCodelistTools
                                           sState +
                                           "'. Valid values: act, dep, rem (or ACTIVE, DEPRECATED, REMOVED)");
     }
+  }
+
+  private static boolean _matchesQuery (@Nullable final String sQuery, @NonNull final String... aFields)
+  {
+    if (sQuery == null || sQuery.isBlank ())
+      return true;
+    final String sLower = sQuery.toLowerCase (Locale.US);
+    for (final String sField : aFields)
+      if (sField != null && sField.toLowerCase (Locale.US).contains (sLower))
+        return true;
+    return false;
+  }
+
+  private static int _parseLimit (@Nullable final Object aLimit)
+  {
+    if (aLimit == null)
+      return DEFAULT_LIMIT;
+    return ((Number) aLimit).intValue ();
+  }
+
+  private static int _parseOffset (@Nullable final Object aOffset)
+  {
+    if (aOffset == null)
+      return 0;
+    return ((Number) aOffset).intValue ();
+  }
+
+  @NonNull
+  private static Map <String, Object> _buildListResult (@NonNull final String sCodeListVersion,
+                                                         @NonNull final List <Map <String, Object>> aAllMatching,
+                                                         final int nOffset,
+                                                         final int nLimit)
+  {
+    final int nTotal = aAllMatching.size ();
+    final int nEffectiveOffset = Math.min (nOffset, nTotal);
+    final int nEnd = Math.min (nEffectiveOffset + nLimit, nTotal);
+    final var aPage = aAllMatching.subList (nEffectiveOffset, nEnd);
+
+    final Map <String, Object> aResult = new LinkedHashMap <> ();
+    aResult.put ("codeListVersion", sCodeListVersion);
+    aResult.put ("totalMatchingEntries", Integer.valueOf (nTotal));
+    aResult.put ("offset", Integer.valueOf (nEffectiveOffset));
+    aResult.put ("limit", Integer.valueOf (nLimit));
+    aResult.put ("returnedEntries", Integer.valueOf (aPage.size ()));
+    aResult.put ("entries", aPage);
+    return aResult;
   }
 
   // -------------------------------------------------------------------------
@@ -343,16 +392,26 @@ public final class PeppolCodelistTools
 
   @NonNull
   private Map <String, Object> _listParticipantIdSchemes (@Nullable final String sState,
-                                                          @Nullable final String sCountryCode)
+                                                          @Nullable final String sCountryCode,
+                                                          @Nullable final String sQuery,
+                                                          final int nOffset,
+                                                          final int nLimit)
   {
     final var eStateFilter = _parseStateFilter (sState);
-    final var aEntries = new ArrayList <Map <String, Object>> ();
+    final var aMatching = new ArrayList <Map <String, Object>> ();
 
     for (final IPeppolParticipantIdentifierScheme aScheme : PeppolParticipantIdentifierSchemeManager.getAllSchemes ())
     {
       if (eStateFilter != null && aScheme.getState () != eStateFilter)
         continue;
       if (StringHelper.isNotEmpty (sCountryCode) && !sCountryCode.equalsIgnoreCase (aScheme.getCountryCode ()))
+        continue;
+      if (!_matchesQuery (sQuery,
+                          aScheme.getISO6523Code (),
+                          aScheme.getSchemeID (),
+                          aScheme.getSchemeName (),
+                          aScheme.getSchemeAgency (),
+                          aScheme.getCountryCode ()))
         continue;
 
       final Map <String, Object> aEntry = new LinkedHashMap <> ();
@@ -364,14 +423,13 @@ public final class PeppolCodelistTools
       aEntry.put ("state", aScheme.getState ().getID ());
       if (aScheme.getRemovalDate () != null)
         aEntry.put ("removalDate", aScheme.getRemovalDate ().toString ());
-      aEntries.add (aEntry);
+      aMatching.add (aEntry);
     }
 
-    final Map <String, Object> aResult = new LinkedHashMap <> ();
-    aResult.put ("codeListVersion", EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
-    aResult.put ("totalEntries", Integer.valueOf (aEntries.size ()));
-    aResult.put ("entries", aEntries);
-    return aResult;
+    return _buildListResult (EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION,
+                             aMatching,
+                             nOffset,
+                             nLimit);
   }
 
   @NonNull
@@ -381,20 +439,38 @@ public final class PeppolCodelistTools
                                     .name ("list_participant_id_schemes")
                                     .description ("""
                                         Lists all Participant identifier schemes (ISO 6523 codes) from the \
-                                        official Peppol codelist. Can be filtered by state and/or country code. \
-                                        Use this to discover which identifier schemes are available for a \
-                                        specific country, or to see all active/deprecated/removed schemes.""")
+                                        official Peppol codelist. Can be filtered by state, country code, \
+                                        and/or a text query that matches against scheme ID, name, agency, \
+                                        ISO 6523 code, or country code. Results are paginated (default limit: \
+                                        50).""")
                                     .inputSchema (new McpSchema.JsonSchema ("object",
                                                                             Map.of ("state",
                                                                                     Map.of ("type",
                                                                                             "string",
                                                                                             "description",
-                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all entries are returned."),
+                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
                                                                                     "countryCode",
                                                                                     Map.of ("type",
                                                                                             "string",
                                                                                             "description",
-                                                                                            "Optional ISO 3166-1 alpha-2 country code to filter by, e.g. 'DE', 'AT', 'NO'")),
+                                                                                            "Optional ISO 3166-1 alpha-2 country code to filter by, e.g. 'DE', 'AT', 'NO'"),
+                                                                                    "query",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional case-insensitive text search across scheme ID, name, agency, ISO 6523 code, and country code"),
+                                                                                    "offset",
+                                                                                    Map.of ("type",
+                                                                                            "integer",
+                                                                                            "description",
+                                                                                            "Number of matching entries to skip (default 0)"),
+                                                                                    "limit",
+                                                                                    Map.of ("type",
+                                                                                            "integer",
+                                                                                            "description",
+                                                                                            "Maximum number of entries to return (default " +
+                                                                                                                              DEFAULT_LIMIT +
+                                                                                                                              ")")),
                                                                             List.of (),
                                                                             Boolean.FALSE,
                                                                             null,
@@ -405,7 +481,14 @@ public final class PeppolCodelistTools
       final var aArgs = request.arguments ();
       final String sState = (String) aArgs.get ("state");
       final String sCountryCode = (String) aArgs.get ("countryCode");
-      return Helper.executeWithErrorHandling ( () -> _listParticipantIdSchemes (sState, sCountryCode));
+      final String sQuery = (String) aArgs.get ("query");
+      final int nOffset = _parseOffset (aArgs.get ("offset"));
+      final int nLimit = _parseLimit (aArgs.get ("limit"));
+      return Helper.executeWithErrorHandling ( () -> _listParticipantIdSchemes (sState,
+                                                                                sCountryCode,
+                                                                                sQuery,
+                                                                                nOffset,
+                                                                                nLimit));
     });
   }
 
@@ -414,14 +497,23 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _listDocumentTypeIds (@Nullable final String sState)
+  private Map <String, Object> _listDocumentTypeIds (@Nullable final String sState,
+                                                      @Nullable final String sQuery,
+                                                      @Nullable final String sDomainCommunity,
+                                                      final int nOffset,
+                                                      final int nLimit)
   {
     final var eStateFilter = _parseStateFilter (sState);
-    final var aEntries = new ArrayList <Map <String, Object>> ();
+    final var aMatching = new ArrayList <Map <String, Object>> ();
 
     for (final IPeppolPredefinedDocumentTypeIdentifier aDT : PredefinedDocumentTypeIdentifierManager.getAllDocumentTypeIdentifiers ())
     {
       if (eStateFilter != null && aDT.getState () != eStateFilter)
+        continue;
+      if (StringHelper.isNotEmpty (sDomainCommunity) &&
+          !sDomainCommunity.equalsIgnoreCase (aDT.getDomainCommunity ()))
+        continue;
+      if (!_matchesQuery (sQuery, aDT.getCommonName (), aDT.getValue ()))
         continue;
 
       final Map <String, Object> aEntry = new LinkedHashMap <> ();
@@ -432,14 +524,13 @@ public final class PeppolCodelistTools
       aEntry.put ("domainCommunity", aDT.getDomainCommunity ());
       if (aDT.getRemovalDate () != null)
         aEntry.put ("removalDate", aDT.getRemovalDate ().toString ());
-      aEntries.add (aEntry);
+      aMatching.add (aEntry);
     }
 
-    final Map <String, Object> aResult = new LinkedHashMap <> ();
-    aResult.put ("codeListVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
-    aResult.put ("totalEntries", Integer.valueOf (aEntries.size ()));
-    aResult.put ("entries", aEntries);
-    return aResult;
+    return _buildListResult (EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION,
+                             aMatching,
+                             nOffset,
+                             nLimit);
   }
 
   @NonNull
@@ -448,16 +539,40 @@ public final class PeppolCodelistTools
     final var aTool = McpSchema.Tool.builder ()
                                     .name ("list_document_type_ids")
                                     .description ("""
-                                        Lists all Document Type identifiers from the official Peppol codelist. \
-                                        Can be filtered by state. Use this to discover which document types \
-                                        (invoices, credit notes, orders, etc.) are defined in the Peppol network. \
-                                        Returns common name, BIS version, domain community, and state for each entry.""")
+                                        Lists Document Type identifiers from the official Peppol codelist. \
+                                        Can be filtered by state, domain community, and/or a text query that \
+                                        matches against the common name or identifier value. Use this to \
+                                        discover which document types (invoices, credit notes, orders, etc.) \
+                                        are defined in the Peppol network. Results are paginated (default limit: \
+                                        50).""")
                                     .inputSchema (new McpSchema.JsonSchema ("object",
                                                                             Map.of ("state",
                                                                                     Map.of ("type",
                                                                                             "string",
                                                                                             "description",
-                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all entries are returned.")),
+                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
+                                                                                    "query",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional case-insensitive text search across the common name and identifier value, e.g. 'credit note', 'UBL.BE', 'XRechnung'"),
+                                                                                    "domainCommunity",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional filter by domain community, e.g. 'POAC', 'PRAC', 'Logistics'"),
+                                                                                    "offset",
+                                                                                    Map.of ("type",
+                                                                                            "integer",
+                                                                                            "description",
+                                                                                            "Number of matching entries to skip (default 0)"),
+                                                                                    "limit",
+                                                                                    Map.of ("type",
+                                                                                            "integer",
+                                                                                            "description",
+                                                                                            "Maximum number of entries to return (default " +
+                                                                                                                              DEFAULT_LIMIT +
+                                                                                                                              ")")),
                                                                             List.of (),
                                                                             Boolean.FALSE,
                                                                             null,
@@ -465,8 +580,17 @@ public final class PeppolCodelistTools
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sState = (String) request.arguments ().get ("state");
-      return Helper.executeWithErrorHandling ( () -> _listDocumentTypeIds (sState));
+      final var aArgs = request.arguments ();
+      final String sState = (String) aArgs.get ("state");
+      final String sQuery = (String) aArgs.get ("query");
+      final String sDomainCommunity = (String) aArgs.get ("domainCommunity");
+      final int nOffset = _parseOffset (aArgs.get ("offset"));
+      final int nLimit = _parseLimit (aArgs.get ("limit"));
+      return Helper.executeWithErrorHandling ( () -> _listDocumentTypeIds (sState,
+                                                                           sQuery,
+                                                                           sDomainCommunity,
+                                                                           nOffset,
+                                                                           nLimit));
     });
   }
 
@@ -475,14 +599,19 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _listProcessIds (@Nullable final String sState)
+  private Map <String, Object> _listProcessIds (@Nullable final String sState,
+                                                 @Nullable final String sQuery,
+                                                 final int nOffset,
+                                                 final int nLimit)
   {
     final var eStateFilter = _parseStateFilter (sState);
-    final var aEntries = new ArrayList <Map <String, Object>> ();
+    final var aMatching = new ArrayList <Map <String, Object>> ();
 
     for (final IPeppolPredefinedProcessIdentifier aProc : PredefinedProcessIdentifierManager.getAllProcessIdentifiers ())
     {
       if (eStateFilter != null && aProc.getState () != eStateFilter)
+        continue;
+      if (!_matchesQuery (sQuery, aProc.getValue ()))
         continue;
 
       final Map <String, Object> aEntry = new LinkedHashMap <> ();
@@ -490,14 +619,13 @@ public final class PeppolCodelistTools
       aEntry.put ("scheme", aProc.getScheme ());
       aEntry.put ("value", aProc.getValue ());
       aEntry.put ("state", aProc.getState ().getID ());
-      aEntries.add (aEntry);
+      aMatching.add (aEntry);
     }
 
-    final Map <String, Object> aResult = new LinkedHashMap <> ();
-    aResult.put ("codeListVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
-    aResult.put ("totalEntries", Integer.valueOf (aEntries.size ()));
-    aResult.put ("entries", aEntries);
-    return aResult;
+    return _buildListResult (EPredefinedProcessIdentifier.CODE_LIST_VERSION,
+                             aMatching,
+                             nOffset,
+                             nLimit);
   }
 
   @NonNull
@@ -506,16 +634,35 @@ public final class PeppolCodelistTools
     final var aTool = McpSchema.Tool.builder ()
                                     .name ("list_process_ids")
                                     .description ("""
-                                        Lists all Process identifiers from the official Peppol codelist. \
-                                        Can be filtered by state. Use this to discover which business \
+                                        Lists Process identifiers from the official Peppol codelist. \
+                                        Can be filtered by state and/or a text query that matches against \
+                                        the process identifier value. Use this to discover which business \
                                         processes (billing, ordering, despatch advice, etc.) are defined \
-                                        in the Peppol network.""")
+                                        in the Peppol network. Results are paginated (default limit: \
+                                        50).""")
                                     .inputSchema (new McpSchema.JsonSchema ("object",
                                                                             Map.of ("state",
                                                                                     Map.of ("type",
                                                                                             "string",
                                                                                             "description",
-                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all entries are returned.")),
+                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
+                                                                                    "query",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional case-insensitive text search on the process identifier value, e.g. 'billing', 'ordering'"),
+                                                                                    "offset",
+                                                                                    Map.of ("type",
+                                                                                            "integer",
+                                                                                            "description",
+                                                                                            "Number of matching entries to skip (default 0)"),
+                                                                                    "limit",
+                                                                                    Map.of ("type",
+                                                                                            "integer",
+                                                                                            "description",
+                                                                                            "Maximum number of entries to return (default " +
+                                                                                                                              DEFAULT_LIMIT +
+                                                                                                                              ")")),
                                                                             List.of (),
                                                                             Boolean.FALSE,
                                                                             null,
@@ -523,8 +670,12 @@ public final class PeppolCodelistTools
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sState = (String) request.arguments ().get ("state");
-      return Helper.executeWithErrorHandling ( () -> _listProcessIds (sState));
+      final var aArgs = request.arguments ();
+      final String sState = (String) aArgs.get ("state");
+      final String sQuery = (String) aArgs.get ("query");
+      final int nOffset = _parseOffset (aArgs.get ("offset"));
+      final int nLimit = _parseLimit (aArgs.get ("limit"));
+      return Helper.executeWithErrorHandling ( () -> _listProcessIds (sState, sQuery, nOffset, nLimit));
     });
   }
 
@@ -533,14 +684,19 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _listSPISUseCaseIds (@Nullable final String sState)
+  private Map <String, Object> _listSPISUseCaseIds (@Nullable final String sState,
+                                                     @Nullable final String sQuery,
+                                                     final int nOffset,
+                                                     final int nLimit)
   {
     final var eStateFilter = _parseStateFilter (sState);
-    final var aEntries = new ArrayList <Map <String, Object>> ();
+    final var aMatching = new ArrayList <Map <String, Object>> ();
 
     for (final var aUseCase : EPredefinedSPISUseCaseIdentifier.values ())
     {
       if (eStateFilter != null && aUseCase.getState () != eStateFilter)
+        continue;
+      if (!_matchesQuery (sQuery, aUseCase.getUseCaseID ()))
         continue;
 
       final Map <String, Object> aEntry = new LinkedHashMap <> ();
@@ -551,14 +707,13 @@ public final class PeppolCodelistTools
         aEntry.put ("deprecationRelease", aUseCase.getDeprecationRelease ().toString ());
       if (aUseCase.getRemovalDate () != null)
         aEntry.put ("removalDate", aUseCase.getRemovalDate ().toString ());
-      aEntries.add (aEntry);
+      aMatching.add (aEntry);
     }
 
-    final Map <String, Object> aResult = new LinkedHashMap <> ();
-    aResult.put ("codeListVersion", EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION);
-    aResult.put ("totalEntries", Integer.valueOf (aEntries.size ()));
-    aResult.put ("entries", aEntries);
-    return aResult;
+    return _buildListResult (EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION,
+                             aMatching,
+                             nOffset,
+                             nLimit);
   }
 
   @NonNull
@@ -567,16 +722,33 @@ public final class PeppolCodelistTools
     final var aTool = McpSchema.Tool.builder ()
                                     .name ("list_spis_use_case_ids")
                                     .description ("""
-                                        Lists all SPIS (Service Provider Information Service) Use Case \
-                                        identifiers from the official Peppol codelist. Can be filtered by state. \
-                                        Use this to discover which SPIS use cases (e.g. MLS - Mandatory Log \
-                                        Service) are defined in the Peppol network.""")
+                                        Lists SPIS (Service Provider Information Service) Use Case \
+                                        identifiers from the official Peppol codelist. Can be filtered by \
+                                        state and/or a text query. Results are paginated (default limit: \
+                                        50).""")
                                     .inputSchema (new McpSchema.JsonSchema ("object",
                                                                             Map.of ("state",
                                                                                     Map.of ("type",
                                                                                             "string",
                                                                                             "description",
-                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all entries are returned.")),
+                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
+                                                                                    "query",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional case-insensitive text search on the use case ID"),
+                                                                                    "offset",
+                                                                                    Map.of ("type",
+                                                                                            "integer",
+                                                                                            "description",
+                                                                                            "Number of matching entries to skip (default 0)"),
+                                                                                    "limit",
+                                                                                    Map.of ("type",
+                                                                                            "integer",
+                                                                                            "description",
+                                                                                            "Maximum number of entries to return (default " +
+                                                                                                                              DEFAULT_LIMIT +
+                                                                                                                              ")")),
                                                                             List.of (),
                                                                             Boolean.FALSE,
                                                                             null,
@@ -584,8 +756,12 @@ public final class PeppolCodelistTools
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sState = (String) request.arguments ().get ("state");
-      return Helper.executeWithErrorHandling ( () -> _listSPISUseCaseIds (sState));
+      final var aArgs = request.arguments ();
+      final String sState = (String) aArgs.get ("state");
+      final String sQuery = (String) aArgs.get ("query");
+      final int nOffset = _parseOffset (aArgs.get ("offset"));
+      final int nLimit = _parseLimit (aArgs.get ("limit"));
+      return Helper.executeWithErrorHandling ( () -> _listSPISUseCaseIds (sState, sQuery, nOffset, nLimit));
     });
   }
 }

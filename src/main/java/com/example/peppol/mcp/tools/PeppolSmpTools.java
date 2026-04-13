@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
 
+import com.example.peppol.mcp.CPhossPeppolMcp;
 import com.example.peppol.mcp.model.DocumentTypeSupportResult;
 import com.example.peppol.mcp.model.EndpointInfo;
 import com.example.peppol.mcp.model.ParticipantInfo;
@@ -41,6 +42,12 @@ public class PeppolSmpTools
   private SMPClientReadOnly _createSmpClient (@NonNull final IParticipantIdentifier aPID) throws SMPDNSResolutionException
   {
     final var aClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
+    // Extend default user agent
+    aClient.withHttpClientSettings (hcs -> hcs.setUserAgent (hcs.getUserAgent () +
+                                                             " " +
+                                                             CPhossPeppolMcp.APP_NAME +
+                                                             "/" +
+                                                             CPhossPeppolMcp.BUILD_VERSION));
     aClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
                                                       : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
     return aClient;
