@@ -12,7 +12,8 @@ import com.example.peppol.mcp.model.EndpointInfo;
 import com.example.peppol.mcp.model.ParticipantInfo;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.base.functional.IThrowingSupplier;
-import com.helger.peppol.sml.ISMLInfo;
+import com.helger.peppol.security.PeppolTrustStores;
+import com.helger.peppol.servicedomain.EPeppolNetwork;
 import com.helger.peppol.smp.ESMPTransportProfile;
 import com.helger.peppolid.IDocumentTypeIdentifier;
 import com.helger.peppolid.IParticipantIdentifier;
@@ -37,12 +38,12 @@ public class PeppolSmpTools
   private static final Logger LOG = LoggerFactory.getLogger (PeppolSmpTools.class);
   private static final ObjectMapper MAPPER = new ObjectMapper ();
 
-  private final ISMLInfo m_aSmlInfo;
+  private final EPeppolNetwork m_eNetwork;
 
-  public PeppolSmpTools (@NonNull final ISMLInfo aSmlInfo)
+  public PeppolSmpTools (@NonNull final EPeppolNetwork eNetwork)
   {
-    ValueEnforcer.notNull (aSmlInfo, "SmlInfo");
-    m_aSmlInfo = aSmlInfo;
+    ValueEnforcer.notNull (eNetwork, "Network");
+    m_eNetwork = eNetwork;
   }
 
   private McpSchema.@NonNull CallToolResult _executeWithErrorHandling (@NonNull final IThrowingSupplier <?, Exception> supplier)
@@ -115,7 +116,9 @@ public class PeppolSmpTools
     try
     {
       final var aPID = parseParticipantId (sPID);
-      final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_aSmlInfo);
+      final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
+      aSmpClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
+                                                           : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
       ret.setSmpUrl (aSmpClient.getSMPHostURI ());
 
       // Actually query the SMP to verify the participant is registered
@@ -174,8 +177,9 @@ public class PeppolSmpTools
     ret.setDocumentTypeId (sDTID);
 
     final var aPID = parseParticipantId (sPID);
-    final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_aSmlInfo);
-
+    final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
+    aSmpClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
+                                                         : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
     final var aDTID = parseDocTypeID (sDTID);
 
     final var aSignedSM = aSmpClient.getServiceMetadataOrNull (aPID, aDTID, null);
@@ -242,7 +246,9 @@ public class PeppolSmpTools
                                         @NonNull final String sPRID) throws Exception
   {
     final var aPID = parseParticipantId (sPID);
-    final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_aSmlInfo);
+    final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
+    aSmpClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
+                                                         : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
     final var aDTID = parseDocTypeID (sDTID);
     final var aPRID = parseProcessID (sPRID);
     final var aTP = ESMPTransportProfile.TRANSPORT_PROFILE_PEPPOL_AS4_V2;

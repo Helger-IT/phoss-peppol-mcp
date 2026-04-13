@@ -31,10 +31,10 @@ public class PeppolMcpServer
 
     // Instantiate tool providers
     final EPeppolNetwork eNetwork = EPeppolNetwork.PRODUCTION;
-    final PeppolSmpTools smpTools = new PeppolSmpTools (eNetwork.getSMLInfo ());
-    final PeppolDirectoryTools directoryTools = new PeppolDirectoryTools ();
-    final PeppolIdentifierValidationTools validationTools = new PeppolIdentifierValidationTools ();
-    final PeppolCodelistTools codelistTools = new PeppolCodelistTools ();
+    final PeppolSmpTools aSmpTools = new PeppolSmpTools (eNetwork);
+    final PeppolDirectoryTools aDirectoryTools = new PeppolDirectoryTools ();
+    final PeppolIdentifierValidationTools aValidationTools = new PeppolIdentifierValidationTools ();
+    final PeppolCodelistTools aCodelistTools = new PeppolCodelistTools ();
 
     // Build and start the MCP server
     final McpSyncServer server = McpServer.sync (new StdioServerTransportProvider (McpJsonDefaults.getMapper ()))
@@ -45,19 +45,19 @@ public class PeppolMcpServer
                                                                                      .tools (Boolean.TRUE)
                                                                                      .build ())
                                           // Register all Peppol tools
-                                          .tools (smpTools.lookupParticipantTool (),
-                                                  smpTools.checkDocumentTypeSupportTool (),
-                                                  smpTools.getEndpointUrlTool (),
-                                                  smpTools.validateParticipantIdTool (),
-                                                  directoryTools.searchParticipantsByNameTool (),
+                                          .tools (aSmpTools.lookupParticipantTool (),
+                                                  aSmpTools.checkDocumentTypeSupportTool (),
+                                                  aSmpTools.getEndpointUrlTool (),
+                                                  aSmpTools.validateParticipantIdTool (),
+                                                  aDirectoryTools.searchParticipantsByNameTool (),
                                                   // Syntactic validation tools
-                                                  validationTools.validateParticipantIdSyntaxTool (),
-                                                  validationTools.validateDocumentTypeIdSyntaxTool (),
-                                                  validationTools.validateProcessIdSyntaxTool (),
+                                                  aValidationTools.validateParticipantIdSyntaxTool (),
+                                                  aValidationTools.validateDocumentTypeIdSyntaxTool (),
+                                                  aValidationTools.validateProcessIdSyntaxTool (),
                                                   // Codelist lookup tools
-                                                  codelistTools.checkParticipantIdSchemeInCodelistTool (),
-                                                  codelistTools.checkDocumentTypeIdInCodelistTool (),
-                                                  codelistTools.checkProcessIdInCodelistTool ())
+                                                  aCodelistTools.checkParticipantIdSchemeInCodelistTool (),
+                                                  aCodelistTools.checkDocumentTypeIdInCodelistTool (),
+                                                  aCodelistTools.checkProcessIdInCodelistTool ())
                                           .build ();
 
     // The StdioServerTransportProvider reads from stdin in a background thread.

@@ -10,10 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -28,127 +29,80 @@ public class PeppolDirectoryTools
   private static final Logger LOG = LoggerFactory.getLogger (PeppolDirectoryTools.class);
   private static final ObjectMapper MAPPER = new ObjectMapper ();
   private static final String DIRECTORY_API = "https://directory.peppol.eu/search/1.0/json";
-  private final HttpClient httpClient = HttpClient.newHttpClient ();
+  private final HttpClient m_aHttpClient = HttpClient.newHttpClient ();
 
   // -------------------------------------------------------------------------
   // Tool: Search participants by company name
   // -------------------------------------------------------------------------
 
-  public McpServerFeatures.SyncToolSpecification searchParticipantsByNameTool ()
-  {
-    final McpSchema.Tool tool = McpSchema.Tool.builder ()
-                                              .name ("search_peppol_directory")
-                                              .description ("""
-                                                  Searches the Peppol Directory (the public registry of all Peppol participants)
-                                                  by company name and optional country code. Use this when a user knows a company
-                                                  name but not their Peppol participant ID, or wants to discover which companies
-                                                  in a given country are registered on the Peppol network.
-                                                  Returns a list of matching participants with their participant IDs and supported
-                                                  document types. Country codes follow ISO 3166-1 alpha-2, e.g. DE, FR, AT, NO.
-                                                  """)
-                                              .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                                      Map.of ("companyName",
-                                                                                              Map.of ("type",
-                                                                                                      "string",
-                                                                                                      "description",
-                                                                                                      "Company name or partial name to search for"),
-                                                                                              "countryCode",
-                                                                                              Map.of ("type",
-                                                                                                      "string",
-                                                                                                      "description",
-                                                                                                      "Optional ISO 3166-1 alpha-2 country code to narrow the search, e.g. DE, AT, FR"),
-                                                                                              "maxResults",
-                                                                                              Map.of ("type",
-                                                                                                      "integer",
-                                                                                                      "description",
-                                                                                                      "Maximum number of results to return (default 10, max 100)")),
-                                                                                      List.of ("companyName"),
-                                                                                      Boolean.FALSE,
-                                                                                      null,
-                                                                                      null))
-                                              .build ();
-
-    return new McpServerFeatures.SyncToolSpecification (tool, (exchange, request) -> {
-      final Map <String, Object> args = request.arguments ();
-      final String companyName = (String) args.get ("companyName");
-      final String countryCode = (String) args.getOrDefault ("countryCode", null);
-      final int maxResults = ((Number) args.getOrDefault ("maxResults", Integer.valueOf (10))).intValue ();
-      return _executeSearch (companyName, countryCode, maxResults);
-    });
-  }
-
-  private McpSchema.CallToolResult _executeSearch (final String companyName,
-                                                   final String countryCode,
-                                                   final int maxResults)
+  private McpSchema.@NonNull CallToolResult _executeSearch (@NonNull final String sCompanyName,
+                                                   final String sCountryCode,
+                                                   final int nMaxResults)
   {
     try
     {
-      // Build the Peppol Directory query URL
-      final StringBuilder url = new StringBuilder (DIRECTORY_API);
-      url.append ("?name=").append (URLEncoder.encode (companyName, StandardCharsets.UTF_8));
-      url.append ("&resultPageCount=").append (Math.min (maxResults, 100));
+      final var aSB = new StringBuilder (DIRECTORY_API);
+      aSB.append ("?name=").append (URLEncoder.encode (sCompanyName, StandardCharsets.UTF_8));
+      aSB.append ("&resultPageCount=").append (Math.min (nMaxResults, 100));
 
-      if (countryCode != null && !countryCode.isBlank ())
-        url.append ("&country=").append (URLEncoder.encode (countryCode.toUpperCase (), StandardCharsets.UTF_8));
+      if (sCountryCode != null && !sCountryCode.isBlank ())
+        aSB.append ("&country=").append (URLEncoder.encode (sCountryCode.toUpperCase (), StandardCharsets.UTF_8));
 
-      final HttpRequest request = HttpRequest.newBuilder ()
-                                             .uri (URI.create (url.toString ()))
-                                             .header ("Accept", "application/json")
-                                             .GET ()
-                                             .build ();
+      final var aRequest = HttpRequest.newBuilder ()
+                                      .uri (URI.create (aSB.toString ()))
+                                      .header ("Accept", "application/json")
+                                      .GET ()
+                                      .build ();
 
-      final HttpResponse <String> response = httpClient.send (request, HttpResponse.BodyHandlers.ofString ());
+      final var aResponse = m_aHttpClient.send (aRequest, HttpResponse.BodyHandlers.ofString ());
 
-      if (response.statusCode () != 200)
-        throw new RuntimeException ("Peppol Directory returned HTTP " + response.statusCode ());
+      if (aResponse.statusCode () != 200)
+        throw new RuntimeException ("Peppol Directory returned HTTP " + aResponse.statusCode ());
 
-      final JsonNode root = MAPPER.readTree (response.body ());
-      final List <Map <String, Object>> results = new ArrayList <> ();
+      final JsonNode aRoot = MAPPER.readTree (aResponse.body ());
+      final List <Map <String, Object>> aResults = new ArrayList <> ();
 
-      if (root.has ("matches"))
+      if (aRoot.has ("matches"))
       {
-        root.get ("matches").forEach (match -> {
-          final Map <String, Object> entry = new java.util.LinkedHashMap <> ();
+        aRoot.get ("matches").forEach (match -> {
+          final Map <String, Object> aEntry = new java.util.LinkedHashMap <> ();
 
-          // Participant ID
           if (match.has ("participantID"))
-            entry.put ("participantId", match.get ("participantID").asString ());
+            aEntry.put ("participantId", match.get ("participantID").asString ());
 
-          // Company names
           if (match.has ("entities") && match.get ("entities").isArray ())
           {
             match.get ("entities").forEach (entity -> {
               if (entity.has ("name") && entity.get ("name").isArray ())
-                entity.get ("name").forEach (n -> entry.put ("companyName", n.get ("name").asString ()));
+                entity.get ("name").forEach (n -> aEntry.put ("companyName", n.get ("name").asString ()));
               if (entity.has ("countryCode"))
-                entry.put ("country", entity.get ("countryCode").asString ());
+                aEntry.put ("country", entity.get ("countryCode").asString ());
             });
           }
 
-          // Document types
           if (match.has ("docTypes") && match.get ("docTypes").isArray ())
           {
-            final List <String> docTypes = new ArrayList <> ();
-            match.get ("docTypes").forEach (dt -> docTypes.add (dt.asString ()));
-            entry.put ("supportedDocumentTypes", docTypes);
+            final List <String> aDocTypes = new ArrayList <> ();
+            match.get ("docTypes").forEach (dt -> aDocTypes.add (dt.asString ()));
+            aEntry.put ("supportedDocumentTypes", aDocTypes);
           }
 
-          results.add (entry);
+          aResults.add (aEntry);
         });
       }
 
-      final Map <String, Object> responseMap = Map.of ("query",
-                                                       companyName,
-                                                       "country",
-                                                       countryCode != null ? countryCode : "all",
-                                                       "totalMatches",
-                                                       Integer.valueOf (results.size ()),
-                                                       "results",
-                                                       results);
+      final var aResponseMap = Map.of ("query",
+                                       sCompanyName,
+                                       "country",
+                                       sCountryCode != null ? sCountryCode : "all",
+                                       "totalMatches",
+                                       Integer.valueOf (aResults.size ()),
+                                       "results",
+                                       aResults);
 
       return McpSchema.CallToolResult.builder ()
                                      .addTextContent (MAPPER.writerWithDefaultPrettyPrinter ()
-                                                            .writeValueAsString (responseMap))
+                                                            .writeValueAsString (aResponseMap))
                                      .isError (Boolean.FALSE)
                                      .build ();
     }
@@ -160,5 +114,49 @@ public class PeppolDirectoryTools
                                      .isError (Boolean.TRUE)
                                      .build ();
     }
+  }
+
+  @NonNull
+  public SyncToolSpecification searchParticipantsByNameTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("search_peppol_directory")
+                                    .description ("""
+                                        Searches the Peppol Directory (the public registry of all Peppol participants)
+                                        by company name and optional country code. Use this when a user knows a company
+                                        name but not their Peppol participant ID, or wants to discover which companies
+                                        in a given country are registered on the Peppol network.
+                                        Returns a list of matching participants with their participant IDs and supported
+                                        document types. Country codes follow ISO 3166-1 alpha-2, e.g. DE, FR, AT, NO.
+                                        """)
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("companyName",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Company name or partial name to search for"),
+                                                                                    "countryCode",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Optional ISO 3166-1 alpha-2 country code to narrow the search, e.g. DE, AT, FR"),
+                                                                                    "maxResults",
+                                                                                    Map.of ("type",
+                                                                                            "integer",
+                                                                                            "description",
+                                                                                            "Maximum number of results to return (default 10, max 100)")),
+                                                                            List.of ("companyName"),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final var aArgs = request.arguments ();
+      final String sCompanyName = (String) aArgs.get ("companyName");
+      final String sCountryCode = (String) aArgs.getOrDefault ("countryCode", null);
+      final int nMaxResults = ((Number) aArgs.getOrDefault ("maxResults", Integer.valueOf (10))).intValue ();
+      return _executeSearch (sCompanyName, sCountryCode, nMaxResults);
+    });
   }
 }

@@ -3,11 +3,13 @@ package com.example.peppol.mcp.tools;
 import java.util.List;
 import java.util.Map;
 
-import tools.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.NonNull;
+
 import com.helger.peppolid.factory.PeppolIdentifierFactory;
 
-import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * MCP tools for syntactic validation of Peppol identifiers. These tools check whether an identifier
@@ -22,41 +24,13 @@ public class PeppolIdentifierValidationTools
   // Tool 1: Validate participant identifier syntax
   // -------------------------------------------------------------------------
 
-  public McpServerFeatures.SyncToolSpecification validateParticipantIdSyntaxTool ()
-  {
-    final McpSchema.Tool tool = McpSchema.Tool.builder ()
-                                              .name ("validate_participant_id_syntax")
-                                              .description ("""
-                                                  Validates whether a string is a syntactically correct Peppol participant \
-                                                  identifier. This checks format only — it does not verify whether the \
-                                                  identifier exists in any codelist or is registered on the Peppol network. \
-                                                  The expected format is scheme:value, for example '0088:4012345678901'. \
-                                                  Use this before performing a live SMP lookup to catch format errors early.""")
-                                              .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                                      Map.of ("participantId",
-                                                                                              Map.of ("type",
-                                                                                                      "string",
-                                                                                                      "description",
-                                                                                                      "String to validate as a Peppol participant identifier, e.g. 0088:4012345678901")),
-                                                                                      List.of ("participantId"),
-                                                                                      Boolean.FALSE,
-                                                                                      null,
-                                                                                      null))
-                                              .build ();
-
-    return new McpServerFeatures.SyncToolSpecification (tool, (exchange, request) -> {
-      final String sParticipantId = (String) request.arguments ().get ("participantId");
-      return _validateParticipantIdSyntax (sParticipantId);
-    });
-  }
-
-  private McpSchema.CallToolResult _validateParticipantIdSyntax (final String sParticipantId)
+  private McpSchema.@NonNull CallToolResult _validateParticipantIdSyntax (@NonNull final String sPID)
   {
     try
     {
-      var aPID = PeppolIdentifierFactory.INSTANCE.parseParticipantIdentifier (sParticipantId);
+      var aPID = PeppolIdentifierFactory.INSTANCE.parseParticipantIdentifier (sPID);
       if (aPID == null)
-        aPID = PeppolIdentifierFactory.INSTANCE.createParticipantIdentifierWithDefaultScheme (sParticipantId);
+        aPID = PeppolIdentifierFactory.INSTANCE.createParticipantIdentifierWithDefaultScheme (sPID);
       if (aPID != null)
       {
         final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
@@ -74,7 +48,7 @@ public class PeppolIdentifierValidationTools
                                  .writeValueAsString (Map.of ("valid",
                                                               Boolean.FALSE,
                                                               "error",
-                                                              "Not a valid Peppol participant identifier. Expected format: scheme:value (e.g. 0088:4012345678901)"));
+                                                              "Not a valid Peppol Participant identifier. Expected format: scheme:value (e.g. 0088:4012345678901)"));
       return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
     }
     catch (final Exception ex)
@@ -84,63 +58,66 @@ public class PeppolIdentifierValidationTools
                                      .isError (Boolean.TRUE)
                                      .build ();
     }
+  }
+
+  @NonNull
+  public SyncToolSpecification validateParticipantIdSyntaxTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("validate_participant_id_syntax")
+                                    .description ("""
+                                        Validates whether a string is a syntactically correct Peppol Participant \
+                                        identifier. This checks format only — it does not verify whether the \
+                                        identifier exists in any codelist or is registered on the Peppol network. \
+                                        The expected format is scheme:value, for example '0088:4012345678901'. \
+                                        Use this before performing a live SMP lookup to catch format errors early.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("participantId",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "String to validate as a Peppol Participant identifier, e.g. 0088:4012345678901")),
+                                                                            List.of ("participantId"),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final String sPID = (String) request.arguments ().get ("participantId");
+      return _validateParticipantIdSyntax (sPID);
+    });
   }
 
   // -------------------------------------------------------------------------
   // Tool 2: Validate document type identifier syntax
   // -------------------------------------------------------------------------
 
-  public McpServerFeatures.SyncToolSpecification validateDocumentTypeIdSyntaxTool ()
-  {
-    final McpSchema.Tool tool = McpSchema.Tool.builder ()
-                                              .name ("validate_document_type_id_syntax")
-                                              .description ("""
-                                                  Validates whether a string is a syntactically correct Peppol document type \
-                                                  identifier. This checks format only — it does not verify whether the \
-                                                  document type is known in the official Peppol codelist. \
-                                                  The value should be a document type identifier string, e.g. \
-                                                  'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##...'.""")
-                                              .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                                      Map.of ("documentTypeId",
-                                                                                              Map.of ("type",
-                                                                                                      "string",
-                                                                                                      "description",
-                                                                                                      "String to validate as a Peppol document type identifier")),
-                                                                                      List.of ("documentTypeId"),
-                                                                                      Boolean.FALSE,
-                                                                                      null,
-                                                                                      null))
-                                              .build ();
-
-    return new McpServerFeatures.SyncToolSpecification (tool, (exchange, request) -> {
-      final String sDocTypeId = (String) request.arguments ().get ("documentTypeId");
-      return _validateDocumentTypeIdSyntax (sDocTypeId);
-    });
-  }
-
-  private McpSchema.CallToolResult _validateDocumentTypeIdSyntax (final String sDocTypeId)
+  private McpSchema.@NonNull CallToolResult _validateDocumentTypeIdSyntax (@NonNull final String sDTID)
   {
     try
     {
-      final var aDocTypeID = PeppolIdentifierFactory.INSTANCE.createDocumentTypeIdentifierWithDefaultScheme (sDocTypeId);
-      if (aDocTypeID != null)
+      var aDTID = PeppolIdentifierFactory.INSTANCE.parseDocumentTypeIdentifier (sDTID);
+      if (aDTID == null)
+        aDTID = PeppolIdentifierFactory.INSTANCE.createDocumentTypeIdentifierWithDefaultScheme (sDTID);
+      if (aDTID != null)
       {
         final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
                                    .writeValueAsString (Map.of ("valid",
                                                                 Boolean.TRUE,
                                                                 "scheme",
-                                                                aDocTypeID.getScheme (),
+                                                                aDTID.getScheme (),
                                                                 "value",
-                                                                aDocTypeID.getValue (),
+                                                                aDTID.getValue (),
                                                                 "uriEncoded",
-                                                                aDocTypeID.getURIEncoded ()));
+                                                                aDTID.getURIEncoded ()));
         return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
       }
       final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
                                  .writeValueAsString (Map.of ("valid",
                                                               Boolean.FALSE,
                                                               "error",
-                                                              "Not a valid Peppol document type identifier"));
+                                                              "Not a valid Peppol Document Type identifier"));
       return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
     }
     catch (final Exception ex)
@@ -150,63 +127,66 @@ public class PeppolIdentifierValidationTools
                                      .isError (Boolean.TRUE)
                                      .build ();
     }
+  }
+
+  @NonNull
+  public SyncToolSpecification validateDocumentTypeIdSyntaxTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("validate_document_type_id_syntax")
+                                    .description ("""
+                                        Validates whether a string is a syntactically correct Peppol Document Type \
+                                        identifier. This checks format only — it does not verify whether the \
+                                        Document Type is known in the official Peppol codelist. \
+                                        The value should be a Document Type identifier string, e.g. \
+                                        'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##...'.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("documentTypeId",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "String to validate as a Peppol Document Type identifier")),
+                                                                            List.of ("documentTypeId"),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final String sDTID = (String) request.arguments ().get ("documentTypeId");
+      return _validateDocumentTypeIdSyntax (sDTID);
+    });
   }
 
   // -------------------------------------------------------------------------
   // Tool 3: Validate process identifier syntax
   // -------------------------------------------------------------------------
 
-  public McpServerFeatures.SyncToolSpecification validateProcessIdSyntaxTool ()
-  {
-    final McpSchema.Tool tool = McpSchema.Tool.builder ()
-                                              .name ("validate_process_id_syntax")
-                                              .description ("""
-                                                  Validates whether a string is a syntactically correct Peppol process \
-                                                  identifier. This checks format only — it does not verify whether the \
-                                                  process is known in the official Peppol codelist. \
-                                                  The value should be a process identifier string, e.g. \
-                                                  'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0'.""")
-                                              .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                                      Map.of ("processId",
-                                                                                              Map.of ("type",
-                                                                                                      "string",
-                                                                                                      "description",
-                                                                                                      "String to validate as a Peppol process identifier")),
-                                                                                      List.of ("processId"),
-                                                                                      Boolean.FALSE,
-                                                                                      null,
-                                                                                      null))
-                                              .build ();
-
-    return new McpServerFeatures.SyncToolSpecification (tool, (exchange, request) -> {
-      final String sProcessId = (String) request.arguments ().get ("processId");
-      return _validateProcessIdSyntax (sProcessId);
-    });
-  }
-
-  private McpSchema.CallToolResult _validateProcessIdSyntax (final String sProcessId)
+  private McpSchema.@NonNull CallToolResult _validateProcessIdSyntax (@NonNull final String sPRID)
   {
     try
     {
-      final var aProcID = PeppolIdentifierFactory.INSTANCE.createProcessIdentifierWithDefaultScheme (sProcessId);
-      if (aProcID != null)
+      var aPRID = PeppolIdentifierFactory.INSTANCE.parseProcessIdentifier (sPRID);
+      if (aPRID == null)
+        aPRID = PeppolIdentifierFactory.INSTANCE.createProcessIdentifierWithDefaultScheme (sPRID);
+      if (aPRID != null)
       {
         final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
                                    .writeValueAsString (Map.of ("valid",
                                                                 Boolean.TRUE,
                                                                 "scheme",
-                                                                aProcID.getScheme (),
+                                                                aPRID.getScheme (),
                                                                 "value",
-                                                                aProcID.getValue (),
+                                                                aPRID.getValue (),
                                                                 "uriEncoded",
-                                                                aProcID.getURIEncoded ()));
+                                                                aPRID.getURIEncoded ()));
         return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
       }
       final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
                                  .writeValueAsString (Map.of ("valid",
                                                               Boolean.FALSE,
                                                               "error",
-                                                              "Not a valid Peppol process identifier"));
+                                                              "Not a valid Peppol Process identifier"));
       return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
     }
     catch (final Exception ex)
@@ -216,5 +196,34 @@ public class PeppolIdentifierValidationTools
                                      .isError (Boolean.TRUE)
                                      .build ();
     }
+  }
+
+  @NonNull
+  public SyncToolSpecification validateProcessIdSyntaxTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("validate_process_id_syntax")
+                                    .description ("""
+                                        Validates whether a string is a syntactically correct Peppol Process \
+                                        identifier. This checks format only — it does not verify whether the \
+                                        Process is known in the official Peppol codelist. \
+                                        The value should be a Process identifier string, e.g. \
+                                        'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0'.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("processId",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "String to validate as a Peppol Process identifier")),
+                                                                            List.of ("processId"),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final String sPRID = (String) request.arguments ().get ("processId");
+      return _validateProcessIdSyntax (sPRID);
+    });
   }
 }
