@@ -27,7 +27,7 @@
 
   <groupId>com.helger.peppol.mcp</groupId>
   <artifactId>phoss-peppol-mcp-server</artifactId>
-  <version>0.5.0</version>
+  <version>0.5.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>phoss Peppol MCP Server</name>
   <description>phoss Peppol MCP server exposing Peppol functionality to AI models</description>
@@ -46,7 +46,7 @@
     <connection>scm:git:https://github.com/Helger-IT/phoss-peppol-mcp.git</connection>
     <developerConnection>scm:git:https://github.com/Helger-IT/phoss-peppol-mcp.git</developerConnection>
     <url>https://github.com/Helger-IT/phoss-peppol-mcp</url>
-    <tag>phoss-peppol-mcp-server-0.5.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <organization>
