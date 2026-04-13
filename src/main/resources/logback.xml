@@ -1,0 +1,21 @@
+<configuration>
+  <!--
+    IMPORTANT: MCP stdio transport uses stdout for protocol communication.
+    All logging MUST go to stderr only, never stdout.
+    Writing anything to stdout breaks the MCP protocol framing.
+  -->
+  <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="STDERR"/>
+  </root>
+
+  <!-- Reduce noise from phax HTTP client -->
+  <logger name="com.helger" level="WARN"/>
+  <logger name="org.apache.http" level="WARN"/>
+</configuration>
