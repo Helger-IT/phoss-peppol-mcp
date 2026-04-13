@@ -109,6 +109,8 @@ public class PeppolDirectoryTools
 
       final var aResponseMap = Map.of ("query",
                                        sCompanyName,
+                                       "network",
+                                       m_eNetwork.name (),
                                        "country",
                                        sCountryCode != null ? sCountryCode : "all",
                                        "totalMatches",

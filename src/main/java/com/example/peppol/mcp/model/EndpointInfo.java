@@ -1,5 +1,8 @@
 package com.example.peppol.mcp.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude (JsonInclude.Include.NON_NULL)
 public class EndpointInfo extends DocumentTypeEndpointInfo
 {
   private String participantID;

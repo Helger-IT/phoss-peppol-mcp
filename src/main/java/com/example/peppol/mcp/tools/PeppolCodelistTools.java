@@ -18,8 +18,6 @@ import com.helger.peppolid.peppol.process.PredefinedProcessIdentifierManager;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
-import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * MCP tools for checking whether Peppol identifiers are present in the official Peppol codelists.
@@ -28,50 +26,37 @@ import tools.jackson.databind.ObjectMapper;
  */
 public final class PeppolCodelistTools
 {
-  private static final ObjectMapper MAPPER = new ObjectMapper ();
-
   // -------------------------------------------------------------------------
   // Tool 1: Check participant identifier scheme in codelist
   // -------------------------------------------------------------------------
 
   @NonNull
-  private CallToolResult _checkParticipantIdSchemeInCodelist (@NonNull final String sInput)
+  private Map <String, Object> _checkParticipantIdSchemeInCodelist (@NonNull final String sInput)
   {
-    try
+    // Try to parse as a full participant identifier
+    final var aPID = Helper.parseParticipantId (sInput, true);
+    final var aScheme = PeppolParticipantIdentifierSchemeManager.getSchemeOfIdentifier (aPID);
+    final String sValue = aPID.getValue ();
+    final int nColon = sValue.indexOf (':');
+    final var sISO6523Code = nColon > 0 ? sValue.substring (0, nColon) : sValue;
+
+    final Map <String, Object> aResult = new LinkedHashMap <> ();
+    aResult.put ("iso6523Code", sISO6523Code);
+    aResult.put ("inCodelist", Boolean.valueOf (aScheme != null));
+    aResult.put ("codeListVersion", EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
+
+    if (aScheme != null)
     {
-      // Try to parse as a full participant identifier
-      final var aPID = Helper.parseParticipantId (sInput, true);
-      final var aScheme = PeppolParticipantIdentifierSchemeManager.getSchemeOfIdentifier (aPID);
-      final String sValue = aPID.getValue ();
-      final int nColon = sValue.indexOf (':');
-      final var sISO6523Code = nColon > 0 ? sValue.substring (0, nColon) : sValue;
-
-      final Map <String, Object> aResult = new LinkedHashMap <> ();
-      aResult.put ("iso6523Code", sISO6523Code);
-      aResult.put ("inCodelist", Boolean.valueOf (aScheme != null));
-      aResult.put ("codeListVersion", EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
-
-      if (aScheme != null)
-      {
-        aResult.put ("schemeID", aScheme.getSchemeID ());
-        aResult.put ("schemeName", aScheme.getSchemeName ());
-        aResult.put ("schemeAgency", aScheme.getSchemeAgency ());
-        aResult.put ("countryCode", aScheme.getCountryCode ());
-        aResult.put ("state", aScheme.getState ().getID ());
-        if (aScheme.getRemovalDate () != null)
-          aResult.put ("removalDate", aScheme.getRemovalDate ().toString ());
-      }
-
-      final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ().writeValueAsString (aResult);
-      return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
+      aResult.put ("schemeID", aScheme.getSchemeID ());
+      aResult.put ("schemeName", aScheme.getSchemeName ());
+      aResult.put ("schemeAgency", aScheme.getSchemeAgency ());
+      aResult.put ("countryCode", aScheme.getCountryCode ());
+      aResult.put ("state", aScheme.getState ().getID ());
+      if (aScheme.getRemovalDate () != null)
+        aResult.put ("removalDate", aScheme.getRemovalDate ().toString ());
     }
-    catch (final Exception ex)
-    {
-      return McpSchema.CallToolResult.builder ()
-                                     .addTextContent ("Error: " + ex.getMessage ())
-                                     .isError (Boolean.TRUE)
-                                     .build ();
-    }
+
+    return aResult;
   }
 
   @NonNull
@@ -100,7 +85,7 @@ public final class PeppolCodelistTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPID = (String) request.arguments ().get ("participantId");
-      return _checkParticipantIdSchemeInCodelist (sPID);
+      return Helper.executeWithErrorHandling ( () -> _checkParticipantIdSchemeInCodelist (sPID));
     });
   }
 
@@ -109,44 +94,33 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private CallToolResult _checkDocumentTypeIdInCodelist (@NonNull final String sDTID)
+  private Map <String, Object> _checkDocumentTypeIdInCodelist (@NonNull final String sDTID)
   {
-    try
+    final var aDTID = Helper.parseDocTypeID (sDTID, true);
+    final IPeppolPredefinedDocumentTypeIdentifier aDocTypeID = PredefinedDocumentTypeIdentifierManager.getDocumentTypeIdentifierOfID (aDTID.getURIEncoded ());
+
+    final Map <String, Object> aResult = new LinkedHashMap <> ();
+    aResult.put ("documentTypeId", aDTID.getURIEncoded ());
+    aResult.put ("inCodelist", Boolean.valueOf (aDocTypeID != null));
+    aResult.put ("codeListVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
+
+    if (aDocTypeID != null)
     {
-      final var aDTID = Helper.parseDocTypeID (sDTID, true);
-      final IPeppolPredefinedDocumentTypeIdentifier aDocTypeID = PredefinedDocumentTypeIdentifierManager.getDocumentTypeIdentifierOfID (aDTID.getURIEncoded ());
+      aResult.put ("commonName", aDocTypeID.getCommonName ());
+      aResult.put ("scheme", aDocTypeID.getScheme ());
+      aResult.put ("state", aDocTypeID.getState ().getID ());
+      if (aDocTypeID.getRemovalDate () != null)
+        aResult.put ("removalDate", aDocTypeID.getRemovalDate ().toString ());
+      aResult.put ("bisVersion", Integer.valueOf (aDocTypeID.getBISVersion ()));
+      aResult.put ("domainCommunity", aDocTypeID.getDomainCommunity ());
+      aResult.put ("issuedByOpenPeppol", Boolean.valueOf (aDocTypeID.isIssuedByOpenPeppol ()));
 
-      final Map <String, Object> aResult = new LinkedHashMap <> ();
-      aResult.put ("documentTypeId", aDTID.getURIEncoded ());
-      aResult.put ("inCodelist", Boolean.valueOf (aDocTypeID != null));
-      aResult.put ("codeListVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
-
-      if (aDocTypeID != null)
-      {
-        aResult.put ("commonName", aDocTypeID.getCommonName ());
-        aResult.put ("scheme", aDocTypeID.getScheme ());
-        aResult.put ("state", aDocTypeID.getState ().getID ());
-        if (aDocTypeID.getRemovalDate () != null)
-          aResult.put ("removalDate", aDocTypeID.getRemovalDate ().toString ());
-        aResult.put ("bisVersion", Integer.valueOf (aDocTypeID.getBISVersion ()));
-        aResult.put ("domainCommunity", aDocTypeID.getDomainCommunity ());
-        aResult.put ("issuedByOpenPeppol", Boolean.valueOf (aDocTypeID.isIssuedByOpenPeppol ()));
-
-        final var aProcessIDs = aDocTypeID.getAllProcessIDs ();
-        if (aProcessIDs != null && aProcessIDs.isNotEmpty ())
-          aResult.put ("processIDs", aProcessIDs.getAllMapped (IProcessIdentifier::getURIEncoded));
-      }
-
-      final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ().writeValueAsString (aResult);
-      return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
+      final var aProcessIDs = aDocTypeID.getAllProcessIDs ();
+      if (aProcessIDs != null && aProcessIDs.isNotEmpty ())
+        aResult.put ("processIDs", aProcessIDs.getAllMapped (IProcessIdentifier::getURIEncoded));
     }
-    catch (final Exception ex)
-    {
-      return McpSchema.CallToolResult.builder ()
-                                     .addTextContent ("Error: " + ex.getMessage ())
-                                     .isError (Boolean.TRUE)
-                                     .build ();
-    }
+
+    return aResult;
   }
 
   @NonNull
@@ -175,7 +149,7 @@ public final class PeppolCodelistTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sDTID = (String) request.arguments ().get ("documentTypeId");
-      return _checkDocumentTypeIdInCodelist (sDTID);
+      return Helper.executeWithErrorHandling ( () -> _checkDocumentTypeIdInCodelist (sDTID));
     });
   }
 
@@ -184,82 +158,24 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private CallToolResult _checkProcessIdInCodelist (@NonNull final String sPRID)
+  private Map <String, Object> _checkProcessIdInCodelist (@NonNull final String sPRID)
   {
-    try
+    final var aPRID = Helper.parseProcessID (sPRID, true);
+    final IPeppolPredefinedProcessIdentifier aProcID = PredefinedProcessIdentifierManager.getProcessIdentifierOfID (aPRID.getURIEncoded ());
+
+    final Map <String, Object> aResult = new LinkedHashMap <> ();
+    aResult.put ("processId", aPRID.getURIEncoded ());
+    aResult.put ("inCodelist", Boolean.valueOf (aProcID != null));
+    aResult.put ("codeListVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
+
+    if (aProcID != null)
     {
-      final var aPRID = Helper.parseProcessID (sPRID, true);
-      final IPeppolPredefinedProcessIdentifier aProcID = PredefinedProcessIdentifierManager.getProcessIdentifierOfID (aPRID.getURIEncoded ());
-
-      final Map <String, Object> aResult = new LinkedHashMap <> ();
-      aResult.put ("processId", aPRID.getURIEncoded ());
-      aResult.put ("inCodelist", Boolean.valueOf (aProcID != null));
-      aResult.put ("codeListVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
-
-      if (aProcID != null)
-      {
-        aResult.put ("scheme", aProcID.getScheme ());
-        aResult.put ("value", aProcID.getValue ());
-        aResult.put ("state", aProcID.getState ().getID ());
-      }
-
-      final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ().writeValueAsString (aResult);
-      return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
+      aResult.put ("scheme", aProcID.getScheme ());
+      aResult.put ("value", aProcID.getValue ());
+      aResult.put ("state", aProcID.getState ().getID ());
     }
-    catch (final Exception ex)
-    {
-      return McpSchema.CallToolResult.builder ()
-                                     .addTextContent ("Error: " + ex.getMessage ())
-                                     .isError (Boolean.TRUE)
-                                     .build ();
-    }
-  }
 
-  // -------------------------------------------------------------------------
-  // Tool 4: Get codelist version
-  // -------------------------------------------------------------------------
-
-  @NonNull
-  private CallToolResult _getCodelistVersion ()
-  {
-    try
-    {
-      final Map <String, Object> aResult = new LinkedHashMap <> ();
-      aResult.put ("participantIdentifierSchemeCodelistVersion", EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
-      aResult.put ("documentTypeCodelistVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
-      aResult.put ("processCodelistVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
-
-      final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ().writeValueAsString (aResult);
-      return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
-    }
-    catch (final Exception ex)
-    {
-      return McpSchema.CallToolResult.builder ()
-                                     .addTextContent ("Error: " + ex.getMessage ())
-                                     .isError (Boolean.TRUE)
-                                     .build ();
-    }
-  }
-
-  @NonNull
-  public SyncToolSpecification getCodelistVersionTool ()
-  {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("get_peppol_codelist_version")
-                                    .description ("""
-                                        Returns the version of the Peppol codelists currently in use. \
-                                        This includes the version of the Participant identifier scheme, \
-                                        Document Type, and Process identifier codelists. \
-                                        No input parameters required.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of (),
-                                                                            List.of (),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
-                                    .build ();
-
-    return new SyncToolSpecification (aTool, (exchange, request) -> _getCodelistVersion ());
+    return aResult;
   }
 
   @NonNull
@@ -287,7 +203,45 @@ public final class PeppolCodelistTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPRID = (String) request.arguments ().get ("processId");
-      return _checkProcessIdInCodelist (sPRID);
+      return Helper.executeWithErrorHandling ( () -> _checkProcessIdInCodelist (sPRID));
     });
+  }
+
+  // -------------------------------------------------------------------------
+  // Tool 4: Get codelist version
+  // -------------------------------------------------------------------------
+
+  @NonNull
+  private Map <String, Object> _getCodelistVersion ()
+  {
+    final Map <String, Object> aResult = new LinkedHashMap <> ();
+    aResult.put ("participantIdentifierSchemeCodelistVersion",
+                 EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
+    aResult.put ("documentTypeCodelistVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
+    aResult.put ("processCodelistVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
+    return aResult;
+  }
+
+  @NonNull
+  public SyncToolSpecification getCodelistVersionTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("get_peppol_codelist_version")
+                                    .description ("""
+                                        Returns the version of the Peppol codelists currently in use. \
+                                        This includes the version of the Participant identifier scheme, \
+                                        Document Type, and Process identifier codelists. \
+                                        No input parameters required.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of (),
+                                                                            List.of (),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool,
+                                      (exchange, request) -> Helper.executeWithErrorHandling (
+                                                                                              this::_getCodelistVersion));
   }
 }

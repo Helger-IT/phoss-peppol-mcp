@@ -4,9 +4,11 @@ import java.security.cert.CertificateException;
 
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.helger.smpclient.peppol.SMPClientReadOnly;
 import com.helger.xsds.peppol.smp1.EndpointType;
 
+@JsonInclude (JsonInclude.Include.NON_NULL)
 public class DocumentTypeEndpointInfo
 {
   private String processID;

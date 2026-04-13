@@ -7,6 +7,7 @@ import org.jspecify.annotations.NonNull;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -22,7 +23,8 @@ public class PeppolIdentifierValidationTools
   // Tool 1: Validate participant identifier syntax
   // -------------------------------------------------------------------------
 
-  private McpSchema.@NonNull CallToolResult _validateParticipantIdSyntax (@NonNull final String sPID)
+  @NonNull
+  private CallToolResult _validateParticipantIdSyntax (@NonNull final String sPID)
   {
     try
     {
@@ -90,7 +92,8 @@ public class PeppolIdentifierValidationTools
   // Tool 2: Validate document type identifier syntax
   // -------------------------------------------------------------------------
 
-  private McpSchema.@NonNull CallToolResult _validateDocumentTypeIdSyntax (@NonNull final String sDTID)
+  @NonNull
+  private CallToolResult _validateDocumentTypeIdSyntax (@NonNull final String sDTID)
   {
     try
     {
@@ -157,7 +160,8 @@ public class PeppolIdentifierValidationTools
   // Tool 3: Validate process identifier syntax
   // -------------------------------------------------------------------------
 
-  private McpSchema.@NonNull CallToolResult _validateProcessIdSyntax (@NonNull final String sPRID)
+  @NonNull
+  private CallToolResult _validateProcessIdSyntax (@NonNull final String sPRID)
   {
     try
     {

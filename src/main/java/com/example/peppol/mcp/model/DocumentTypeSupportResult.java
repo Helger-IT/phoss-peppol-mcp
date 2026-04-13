@@ -6,8 +6,10 @@ import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.helger.xsds.peppol.smp1.EndpointType;
 
+@JsonInclude (JsonInclude.Include.NON_NULL)
 public class DocumentTypeSupportResult
 {
   private String participantId;

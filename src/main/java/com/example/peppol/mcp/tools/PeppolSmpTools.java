@@ -4,26 +4,22 @@ import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.example.peppol.mcp.model.DocumentTypeSupportResult;
 import com.example.peppol.mcp.model.EndpointInfo;
 import com.example.peppol.mcp.model.ParticipantInfo;
 import com.helger.base.enforce.ValueEnforcer;
-import com.helger.base.functional.IThrowingSupplier;
 import com.helger.peppol.security.PeppolTrustStores;
 import com.helger.peppol.servicedomain.EPeppolNetwork;
 import com.helger.peppol.smp.ESMPTransportProfile;
 import com.helger.peppolid.CIdentifier;
+import com.helger.peppolid.IParticipantIdentifier;
 import com.helger.smpclient.peppol.SMPClientReadOnly;
 import com.helger.smpclient.url.PeppolNaptrURLProvider;
 import com.helger.smpclient.url.SMPDNSResolutionException;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
-import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * MCP tools wrapping the phax peppol-smp-client library. Each method returns a
@@ -33,9 +29,6 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class PeppolSmpTools
 {
-  private static final Logger LOG = LoggerFactory.getLogger (PeppolSmpTools.class);
-  private static final ObjectMapper MAPPER = new ObjectMapper ();
-
   private final EPeppolNetwork m_eNetwork;
 
   public PeppolSmpTools (@NonNull final EPeppolNetwork eNetwork)
@@ -45,22 +38,12 @@ public class PeppolSmpTools
   }
 
   @NonNull
-  private CallToolResult _executeWithErrorHandling (@NonNull final IThrowingSupplier <?, Exception> supplier)
+  private SMPClientReadOnly _createSmpClient (@NonNull final IParticipantIdentifier aPID) throws SMPDNSResolutionException
   {
-    try
-    {
-      final Object aResult = supplier.get ();
-      final String sJson = MAPPER.writerWithDefaultPrettyPrinter ().writeValueAsString (aResult);
-      return McpSchema.CallToolResult.builder ().addTextContent (sJson).isError (Boolean.FALSE).build ();
-    }
-    catch (final Exception ex)
-    {
-      LOG.error ("Tool execution failed", ex);
-      return McpSchema.CallToolResult.builder ()
-                                     .addTextContent ("Error: " + ex.getMessage ())
-                                     .isError (Boolean.TRUE)
-                                     .build ();
-    }
+    final var aClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
+    aClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
+                                                      : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
+    return aClient;
   }
 
   // -------------------------------------------------------------------------
@@ -71,24 +54,31 @@ public class PeppolSmpTools
   private ParticipantInfo _lookupParticipant (@NonNull final String sPID) throws Exception
   {
     final var ret = new ParticipantInfo ();
-    ret.setParticipantId (sPID);
+    ret.setNetwork (m_eNetwork.name ());
 
     try
     {
       final var aPID = Helper.parseParticipantId (sPID, true);
-      final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
-      aSmpClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
-                                                           : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
-      ret.setSmpUrl (aSmpClient.getSMPHostURI ());
+      ret.setParticipantId (aPID.getURIEncoded ());
 
-      // Actually query the SMP to verify the participant is registered
-      final var aServiceGroup = aSmpClient.getServiceGroupOrNull (aPID);
-      ret.setRegistered (aServiceGroup != null);
+      final var aSmpClient = _createSmpClient (aPID);
+      ret.setSmpUrl (aSmpClient.getSMPHostURI ());
+      ret.setRegistered (true);
+      ret.setMessage ("Participant " +
+                      aPID.getURIEncoded () +
+                      " is registered on the Peppol " +
+                      m_eNetwork.name () +
+                      " network");
     }
     catch (final SMPDNSResolutionException ex)
     {
-      ret.setSmpUrl (null);
+      ret.setParticipantId (sPID);
       ret.setRegistered (false);
+      ret.setMessage ("Participant " +
+                      sPID +
+                      " is not registered on the Peppol " +
+                      m_eNetwork.name () +
+                      " network (DNS lookup failed)");
     }
     return ret;
   }
@@ -103,8 +93,9 @@ public class PeppolSmpTools
                                         their registration details. Use this when a user asks whether a company can
                                         receive Peppol documents, or wants to know their Peppol registration status.
                                         The participantId must be in the format <scheme>:<value>, for example
-                                        '0088:4012345678901' for a GLN, or '0184:DK12345678' for a Danish CVR number.
-                                        Common schemes: 0184 (DK CVR), 0192 (NO org), 9906 (IT VAT), 0060 (DUNS).
+                                        '0088:4012345678901' for a GLN, '0184:DK12345678' for a Danish CVR number,
+                                        or '9915:AT123456789' for an Austrian UID.
+                                        Common schemes: 0184 (DK CVR), 0192 (NO org), 9906 (IT VAT), 9915 (AT UID), 0060 (DUNS).
                                         """)
                                     .inputSchema (new McpSchema.JsonSchema ("object",
                                                                             Map.of ("participantId",
@@ -120,7 +111,7 @@ public class PeppolSmpTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPID = (String) request.arguments ().get ("participantId");
-      return _executeWithErrorHandling ( () -> _lookupParticipant (sPID));
+      return Helper.executeWithErrorHandling ( () -> _lookupParticipant (sPID));
     });
   }
 
@@ -136,9 +127,7 @@ public class PeppolSmpTools
 
     final var aPID = Helper.parseParticipantId (sPID, true);
     ret.setParticipantId (aPID.getURIEncoded ());
-    final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
-    aSmpClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
-                                                         : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
+    final var aSmpClient = _createSmpClient (aPID);
     final var aDTID = Helper.parseDocTypeID (sDTID, true);
     ret.setDocumentTypeId (aDTID.getURIEncoded ());
 
@@ -169,8 +158,7 @@ public class PeppolSmpTools
                                         they can send a particular document type to a specific company.
                                         The documentTypeId should be a Peppol document type identifier, for example
                                         'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1'
-                                        for a Peppol BIS Billing 3.0 invoice. If unsure of the exact ID, use the
-                                        lookup_peppol_participant tool first to discover supported document types.
+                                        for a Peppol BIS Billing 3.0 invoice.
                                         """)
                                     .inputSchema (new McpSchema.JsonSchema ("object",
                                                                             Map.of ("participantId",
@@ -192,7 +180,7 @@ public class PeppolSmpTools
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPID = (String) request.arguments ().get ("participantId");
       final String sDTID = (String) request.arguments ().get ("documentTypeId");
-      return _executeWithErrorHandling ( () -> _checkDocumentTypeSupport (sPID, sDTID));
+      return Helper.executeWithErrorHandling ( () -> _checkDocumentTypeSupport (sPID, sDTID));
     });
   }
 
@@ -206,9 +194,7 @@ public class PeppolSmpTools
                                         @NonNull final String sPRID) throws Exception
   {
     final var aPID = Helper.parseParticipantId (sPID, true);
-    final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
-    aSmpClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
-                                                         : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
+    final var aSmpClient = _createSmpClient (aPID);
     final var aDTID = Helper.parseDocTypeID (sDTID, true);
     final var aPRID = Helper.parseProcessID (sPRID, true);
     final var aTP = ESMPTransportProfile.TRANSPORT_PROFILE_PEPPOL_AS4_V2;
@@ -242,6 +228,7 @@ public class PeppolSmpTools
                                         Use this when you need the actual technical URL to send a document to a company,
                                         for example to configure an access point or diagnose connectivity issues.
                                         Returns the endpoint URL, transport profile, and certificate information.
+                                        Note: this currently only checks the Peppol AS4 v2 transport profile.
                                         """)
                                     .inputSchema (new McpSchema.JsonSchema ("object",
                                                                             Map.of ("participantId",
@@ -271,7 +258,7 @@ public class PeppolSmpTools
       final String sPID = (String) request.arguments ().get ("participantId");
       final String sDTID = (String) request.arguments ().get ("documentTypeId");
       final String sPRID = (String) request.arguments ().get ("processId");
-      return _executeWithErrorHandling ( () -> _getEndpointUrl (sPID, sDTID, sPRID));
+      return Helper.executeWithErrorHandling ( () -> _getEndpointUrl (sPID, sDTID, sPRID));
     });
   }
 }
