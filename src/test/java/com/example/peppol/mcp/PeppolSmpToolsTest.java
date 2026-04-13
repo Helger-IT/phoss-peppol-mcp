@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.example.peppol.mcp.tools.PeppolSmpTools;
+import com.helger.peppol.servicedomain.EPeppolNetwork;
 
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -28,7 +29,7 @@ class PeppolSmpToolsTest
   @BeforeEach
   void setUp ()
   {
-    tools = new PeppolSmpTools ();
+    tools = new PeppolSmpTools (EPeppolNetwork.TEST.getSMLInfo ());
   }
 
   // -----------------------------------------------------------------------
@@ -39,7 +40,11 @@ class PeppolSmpToolsTest
   void testValidParticipantIdFormat ()
   {
     final McpServerFeatures.SyncToolSpecification spec = tools.validateParticipantIdTool ();
-    final McpSchema.CallToolResult result = spec.call ().apply (null, Map.of ("participantId", "0088:4012345678901"));
+    final McpSchema.CallToolResult result = spec.callHandler ()
+                                                .apply (null,
+                                                        new McpSchema.CallToolRequest ("validate_peppol_participant_id",
+                                                                                       Map.of ("participantId",
+                                                                                               "0088:4012345678901")));
 
     assertFalse (result.isError ().booleanValue ());
     final String content = ((McpSchema.TextContent) result.content ().get (0)).text ();
@@ -50,7 +55,11 @@ class PeppolSmpToolsTest
   void testInvalidParticipantIdFormat ()
   {
     final McpServerFeatures.SyncToolSpecification spec = tools.validateParticipantIdTool ();
-    final McpSchema.CallToolResult result = spec.call ().apply (null, Map.of ("participantId", "not-a-valid-id"));
+    final McpSchema.CallToolResult result = spec.callHandler ()
+                                                .apply (null,
+                                                        new McpSchema.CallToolRequest ("validate_peppol_participant_id",
+                                                                                       Map.of ("participantId",
+                                                                                               "not-a-valid-id")));
 
     // Should return an error result but not throw
     assertNotNull (result);
@@ -63,7 +72,11 @@ class PeppolSmpToolsTest
   void testValidParticipantIdSchemeExtracted ()
   {
     final McpServerFeatures.SyncToolSpecification spec = tools.validateParticipantIdTool ();
-    final McpSchema.CallToolResult result = spec.call ().apply (null, Map.of ("participantId", "0192:123456789"));
+    final McpSchema.CallToolResult result = spec.callHandler ()
+                                                .apply (null,
+                                                        new McpSchema.CallToolRequest ("validate_peppol_participant_id",
+                                                                                       Map.of ("participantId",
+                                                                                               "0192:123456789")));
 
     assertFalse (result.isError ().booleanValue ());
     final String content = ((McpSchema.TextContent) result.content ().get (0)).text ();
@@ -82,7 +95,11 @@ class PeppolSmpToolsTest
     // from your network if this is not registered in production SML.
     final McpServerFeatures.SyncToolSpecification spec = tools.lookupParticipantTool ();
     // example Norwegian participant
-    final McpSchema.CallToolResult result = spec.call ().apply (null, Map.of ("participantId", "0192:991825827"));
+    final McpSchema.CallToolResult result = spec.callHandler ()
+                                                .apply (null,
+                                                        new McpSchema.CallToolRequest ("lookup_peppol_participant",
+                                                                                       Map.of ("participantId",
+                                                                                               "0192:991825827")));
 
     assertNotNull (result);
     // If registered: isError=false and body contains smpUrl
@@ -97,7 +114,11 @@ class PeppolSmpToolsTest
   {
     final McpServerFeatures.SyncToolSpecification spec = tools.lookupParticipantTool ();
     // unlikely to be registered
-    final McpSchema.CallToolResult result = spec.call ().apply (null, Map.of ("participantId", "0088:0000000000000"));
+    final McpSchema.CallToolResult result = spec.callHandler ()
+                                                .apply (null,
+                                                        new McpSchema.CallToolRequest ("lookup_peppol_participant",
+                                                                                       Map.of ("participantId",
+                                                                                               "0088:0000000000000")));
 
     assertNotNull (result);
     // Should return isError=true with a user-friendly message, not a stack trace

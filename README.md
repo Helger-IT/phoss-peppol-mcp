@@ -13,26 +13,32 @@ capabilities as tools to AI models such as Claude.
 
 ## Build
 
-    mvn clean package
+```shell
+mvn clean package
+```
 
 ## Testing
 
 ### Level 1 — Unit tests (no network, fast)
 
-    mvn test
+```shell
+mvn test
+```
 
 ### Level 2 — MCP Inspector (validates MCP protocol)
 
-    npx @modelcontextprotocol/inspector java -jar target/peppol-mcp-server.jar
+```shell
+npx @modelcontextprotocol/inspector java -jar target/peppol-mcp-server.jar
+```
 
-This opens a browser UI at http://localhost:5173 where you can invoke
+This opens a browser UI at `http://localhost:5173` where you can invoke
 each tool manually and inspect the exact JSON exchanged over the protocol.
 
 ### Level 3 — Claude Desktop integration
 
 Add to your Claude Desktop config
-(~/Library/Application Support/Claude/claude_desktop_config.json on macOS,
- %APPDATA%\Claude\claude_desktop_config.json on Windows):
+(`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS,
+ `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
 
     {
       "mcpServers": {
@@ -52,8 +58,8 @@ Restart Claude Desktop and ask questions like:
 
 The MCP stdio transport uses stdout exclusively for protocol communication.
 Any logging written to stdout will corrupt the protocol framing and break
-the connection. The logback.xml in this project enforces stderr-only logging.
-Never use System.out.println() in tool implementations.
+the connection. The `logback.xml` in this project enforces stderr-only logging.
+Never use `System.out.println()` in tool implementations.
 
 ## Switching to the Peppol test network (SMK)
 

@@ -7,7 +7,9 @@ import com.example.peppol.mcp.tools.PeppolCodelistTools;
 import com.example.peppol.mcp.tools.PeppolDirectoryTools;
 import com.example.peppol.mcp.tools.PeppolIdentifierValidationTools;
 import com.example.peppol.mcp.tools.PeppolSmpTools;
+import com.helger.peppol.servicedomain.EPeppolNetwork;
 
+import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
@@ -28,13 +30,14 @@ public class PeppolMcpServer
     LOG.info ("Starting Peppol MCP Server...");
 
     // Instantiate tool providers
-    final PeppolSmpTools smpTools = new PeppolSmpTools ();
+    final EPeppolNetwork eNetwork = EPeppolNetwork.PRODUCTION;
+    final PeppolSmpTools smpTools = new PeppolSmpTools (eNetwork.getSMLInfo ());
     final PeppolDirectoryTools directoryTools = new PeppolDirectoryTools ();
     final PeppolIdentifierValidationTools validationTools = new PeppolIdentifierValidationTools ();
     final PeppolCodelistTools codelistTools = new PeppolCodelistTools ();
 
     // Build and start the MCP server
-    final McpSyncServer server = McpServer.sync (new StdioServerTransportProvider ())
+    final McpSyncServer server = McpServer.sync (new StdioServerTransportProvider (McpJsonDefaults.getMapper ()))
                                           .serverInfo ("peppol-mcp-server", "1.0.0")
                                           .capabilities (McpSchema.ServerCapabilities.builder ()
                                                                                      // expose tools
