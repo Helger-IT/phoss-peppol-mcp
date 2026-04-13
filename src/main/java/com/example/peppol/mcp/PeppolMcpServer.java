@@ -3,7 +3,9 @@ package com.example.peppol.mcp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.example.peppol.mcp.tools.PeppolCodelistTools;
 import com.example.peppol.mcp.tools.PeppolDirectoryTools;
+import com.example.peppol.mcp.tools.PeppolIdentifierValidationTools;
 import com.example.peppol.mcp.tools.PeppolSmpTools;
 
 import io.modelcontextprotocol.server.McpServer;
@@ -28,6 +30,8 @@ public class PeppolMcpServer
     // Instantiate tool providers
     final PeppolSmpTools smpTools = new PeppolSmpTools ();
     final PeppolDirectoryTools directoryTools = new PeppolDirectoryTools ();
+    final PeppolIdentifierValidationTools validationTools = new PeppolIdentifierValidationTools ();
+    final PeppolCodelistTools codelistTools = new PeppolCodelistTools ();
 
     // Build and start the MCP server
     final McpSyncServer server = McpServer.sync (new StdioServerTransportProvider ())
@@ -42,7 +46,15 @@ public class PeppolMcpServer
                                                   smpTools.checkDocumentTypeSupportTool (),
                                                   smpTools.getEndpointUrlTool (),
                                                   smpTools.validateParticipantIdTool (),
-                                                  directoryTools.searchParticipantsByNameTool ())
+                                                  directoryTools.searchParticipantsByNameTool (),
+                                                  // Syntactic validation tools
+                                                  validationTools.validateParticipantIdSyntaxTool (),
+                                                  validationTools.validateDocumentTypeIdSyntaxTool (),
+                                                  validationTools.validateProcessIdSyntaxTool (),
+                                                  // Codelist lookup tools
+                                                  codelistTools.checkParticipantIdSchemeInCodelistTool (),
+                                                  codelistTools.checkDocumentTypeIdInCodelistTool (),
+                                                  codelistTools.checkProcessIdInCodelistTool ())
                                           .build ();
 
     // The StdioServerTransportProvider reads from stdin in a background thread.
