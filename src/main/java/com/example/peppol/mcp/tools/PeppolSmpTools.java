@@ -15,12 +15,14 @@ import com.helger.base.functional.IThrowingSupplier;
 import com.helger.peppol.security.PeppolTrustStores;
 import com.helger.peppol.servicedomain.EPeppolNetwork;
 import com.helger.peppol.smp.ESMPTransportProfile;
+import com.helger.peppolid.CIdentifier;
 import com.helger.smpclient.peppol.SMPClientReadOnly;
 import com.helger.smpclient.url.PeppolNaptrURLProvider;
 import com.helger.smpclient.url.SMPDNSResolutionException;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -42,7 +44,8 @@ public class PeppolSmpTools
     m_eNetwork = eNetwork;
   }
 
-  private McpSchema.@NonNull CallToolResult _executeWithErrorHandling (@NonNull final IThrowingSupplier <?, Exception> supplier)
+  @NonNull
+  private CallToolResult _executeWithErrorHandling (@NonNull final IThrowingSupplier <?, Exception> supplier)
   {
     try
     {
@@ -130,14 +133,14 @@ public class PeppolSmpTools
                                                                                                                         throws Exception
   {
     final var ret = new DocumentTypeSupportResult ();
-    ret.setParticipantId (sPID);
-    ret.setDocumentTypeId (sDTID);
 
     final var aPID = Helper.parseParticipantId (sPID, true);
+    ret.setParticipantId (aPID.getURIEncoded ());
     final var aSmpClient = new SMPClientReadOnly (PeppolNaptrURLProvider.INSTANCE, aPID, m_eNetwork.getSMLInfo ());
     aSmpClient.setTrustStore (m_eNetwork.isProduction () ? PeppolTrustStores.Config2025.TRUSTSTORE_SMP_PRODUCTION
                                                          : PeppolTrustStores.Config2025.TRUSTSTORE_SMP_TEST);
     final var aDTID = Helper.parseDocTypeID (sDTID, true);
+    ret.setDocumentTypeId (aDTID.getURIEncoded ());
 
     final var aSignedSM = aSmpClient.getServiceMetadataOrNull (aPID, aDTID, null);
     ret.setSupported (aSignedSM != null);
@@ -149,7 +152,7 @@ public class PeppolSmpTools
         for (final var aProcess : aSI.getProcessList ().getProcess ())
           if (aProcess.getServiceEndpointList () != null)
             for (final var aEndpoint : aProcess.getServiceEndpointList ().getEndpoint ())
-              ret.addEndpoint (aEndpoint.getTransportProfile (), SMPClientReadOnly.getEndpointAddress (aEndpoint));
+              ret.addEndpoint (CIdentifier.getURIEncoded (aProcess.getProcessIdentifier ()), aEndpoint);
     }
 
     return ret;
@@ -165,7 +168,7 @@ public class PeppolSmpTools
                                         such as an invoice, credit note, or order. Use this when a user asks whether
                                         they can send a particular document type to a specific company.
                                         The documentTypeId should be a Peppol document type identifier, for example
-                                        'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017...'
+                                        'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1'
                                         for a Peppol BIS Billing 3.0 invoice. If unsure of the exact ID, use the
                                         lookup_peppol_participant tool first to discover supported document types.
                                         """)
@@ -212,9 +215,9 @@ public class PeppolSmpTools
     final var aSignedSM = aSmpClient.getServiceMetadataOrNull (aPID, aDTID, null);
 
     final var ret = new EndpointInfo ();
-    ret.setParticipantID (sPID);
-    ret.setDocumentTypeID (sDTID);
-    ret.setProcessID (sPRID);
+    ret.setParticipantID (aPID.getURIEncoded ());
+    ret.setDocumentTypeID (aDTID.getURIEncoded ());
+    ret.setProcessID (aPRID.getURIEncoded ());
     ret.setFound (false);
 
     if (aSignedSM != null)
@@ -223,14 +226,7 @@ public class PeppolSmpTools
       if (aEndpoint != null)
       {
         ret.setFound (true);
-        ret.setEndpointUrl (SMPClientReadOnly.getEndpointAddress (aEndpoint));
-        ret.setTransportProfile (aTP.getID ());
-        final var aCert = SMPClientReadOnly.getEndpointCertificate (aEndpoint);
-        if (aCert != null)
-        {
-          ret.setCertificateIssuer (aCert.getIssuerX500Principal ().getName ());
-          ret.setCertificateSubject (aCert.getSubjectX500Principal ().getName ());
-        }
+        ret.init (aEndpoint);
       }
     }
     return ret;
@@ -242,7 +238,7 @@ public class PeppolSmpTools
     final var aTool = McpSchema.Tool.builder ()
                                     .name ("get_peppol_endpoint_url")
                                     .description ("""
-                                        Retrieves the AS4 endpoint URL for a Peppol participant for a specific document type.
+                                        Retrieves the AS4 endpoint URL for a Peppol Participant for a specific document type.
                                         Use this when you need the actual technical URL to send a document to a company,
                                         for example to configure an access point or diagnose connectivity issues.
                                         Returns the endpoint URL, transport profile, and certificate information.
@@ -262,7 +258,7 @@ public class PeppolSmpTools
                                                                                     Map.of ("type",
                                                                                             "string",
                                                                                             "description",
-                                                                                            "Peppol process identifier URN, e.g. urn:fdc:peppol.eu:2017:poacc:billing:01:1.0")),
+                                                                                            "Peppol process identifier URN, e.g. 'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0'")),
                                                                             List.of ("participantId",
                                                                                      "documentTypeId",
                                                                                      "processId"),
