@@ -26,7 +26,7 @@ import org.junit.Test;
  *
  * @author Philip Helger
  */
-public final class CPhossPeppolMCPVersionTest
+public final class CPhossPeppolMcpTest
 {
   @Test
   public void testBasic ()
