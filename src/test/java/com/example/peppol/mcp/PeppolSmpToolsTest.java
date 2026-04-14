@@ -16,14 +16,14 @@
  */
 package com.example.peppol.mcp;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.example.peppol.mcp.tools.PeppolSmpTools;
 import com.helger.peppol.servicedomain.EPeppolNetwork;
@@ -38,12 +38,12 @@ import io.modelcontextprotocol.spec.McpSchema;
  * java -jar target/peppol-mcp-server.jar".<br>
  * For Level 3 (end-to-end with Claude), configure Claude Desktop's config.json.
  */
-class PeppolSmpToolsTest
+public final class PeppolSmpToolsTest
 {
   private PeppolSmpTools m_aTools;
 
-  @BeforeEach
-  void setUp ()
+  @Before
+  public void setUp ()
   {
     m_aTools = new PeppolSmpTools (EPeppolNetwork.TEST);
   }
@@ -54,7 +54,7 @@ class PeppolSmpToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testLookupKnownParticipant ()
+  public void testLookupKnownParticipant ()
   {
     // This uses a well-known Peppol test participant — replace with a real one
     // from your network if this is not registered in production SML.
@@ -74,7 +74,7 @@ class PeppolSmpToolsTest
   }
 
   @Test
-  void testLookupNonExistentParticipant ()
+  public void testLookupNonExistentParticipant ()
   {
     final var aSpec = m_aTools.lookupParticipantTool ();
     // unlikely to be registered
@@ -88,6 +88,6 @@ class PeppolSmpToolsTest
     // The tool gracefully handles non-existent participants: isError=false, registered=false
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue (sContent.contains ("\"registered\" : false"), "Expected registered=false for non-existent participant");
+    assertTrue ("Expected registered=false for non-existent participant", sContent.contains ("\"registered\" : false"));
   }
 }

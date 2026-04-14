@@ -16,10 +16,10 @@
  */
 package com.example.peppol.mcp;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 /**
  * Test class for class {@link CPhossPeppolMcp}
@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 public final class CPhossPeppolMCPVersionTest
 {
   @Test
-  void testBasic ()
+  public void testBasic ()
   {
     assertNotEquals ("undefined", CPhossPeppolMcp.BUILD_VERSION);
     assertNotEquals ("undefined", CPhossPeppolMcp.BUILD_TIMESTAMP);

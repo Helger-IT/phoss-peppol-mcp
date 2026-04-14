@@ -16,14 +16,14 @@
  */
 package com.example.peppol.mcp;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.example.peppol.mcp.tools.PeppolIdentifierValidationTools;
 
@@ -38,8 +38,8 @@ public final class PeppolIdentifierValidationToolsTest
 {
   private PeppolIdentifierValidationTools m_aTools;
 
-  @BeforeEach
-  void setUp ()
+  @Before
+  public void setUp ()
   {
     m_aTools = new PeppolIdentifierValidationTools ();
   }
@@ -49,7 +49,7 @@ public final class PeppolIdentifierValidationToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testValidParticipantIdFormat ()
+  public void testValidParticipantIdFormat ()
   {
     final var aSpec = m_aTools.validateParticipantIdSyntaxTool ();
     final var aResult = aSpec.callHandler ()
@@ -59,11 +59,11 @@ public final class PeppolIdentifierValidationToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue (sContent.contains ("\"valid\" : true"), "Expected valid=true for valid participant ID");
+    assertTrue ("Expected valid=true for valid participant ID", sContent.contains ("\"valid\" : true"));
   }
 
   @Test
-  void testInvalidParticipantIdFormat ()
+  public void testInvalidParticipantIdFormat ()
   {
     final var aSpec = m_aTools.validateParticipantIdSyntaxTool ();
     final var aResult = aSpec.callHandler ()
@@ -73,11 +73,11 @@ public final class PeppolIdentifierValidationToolsTest
     assertNotNull (aResult);
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue (sContent.contains ("\"valid\" : false"), "Expected valid=false for invalid participant ID");
+    assertTrue ("Expected valid=false for invalid participant ID", sContent.contains ("\"valid\" : false"));
   }
 
   @Test
-  void testValidParticipantIdSchemeExtracted ()
+  public void testValidParticipantIdSchemeExtracted ()
   {
     final var aSpec = m_aTools.validateParticipantIdSyntaxTool ();
     final var aResult = aSpec.callHandler ()
@@ -87,11 +87,11 @@ public final class PeppolIdentifierValidationToolsTest
     assertNotNull (aResult);
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue (sContent.contains ("0192"), "Expected scheme 0192 (Norwegian org) in response");
+    assertTrue ("Expected scheme 0192 (Norwegian org) in response", sContent.contains ("0192"));
   }
 
   @Test
-  void testValidParticipantIdSchemeExtracted2 ()
+  public void testValidParticipantIdSchemeExtracted2 ()
   {
     final var aSpec = m_aTools.validateParticipantIdSyntaxTool ();
     final var aResult = aSpec.callHandler ()
@@ -102,6 +102,6 @@ public final class PeppolIdentifierValidationToolsTest
     assertNotNull (aResult);
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue (sContent.contains ("0192"), "Expected scheme 0192 (Norwegian org) in response");
+    assertTrue ("Expected scheme 0192 (Norwegian org) in response", sContent.contains ("0192"));
   }
 }

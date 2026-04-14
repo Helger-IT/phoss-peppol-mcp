@@ -16,15 +16,15 @@
  */
 package com.example.peppol.mcp;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import com.example.peppol.mcp.tools.PeppolCodelistTools;
 
@@ -34,7 +34,7 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 /**
  * Unit tests for {@link PeppolCodelistTools}. All tests are local (no network needed).
  */
-class PeppolCodelistToolsTest
+public final class PeppolCodelistToolsTest
 {
   private final PeppolCodelistTools m_aTools = new PeppolCodelistTools ();
 
@@ -107,7 +107,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testGetCodelistVersion ()
+  public void testGetCodelistVersion ()
   {
     final var aResult = m_aTools.getCodelistVersionTool ()
                                 .callHandler ()
@@ -127,7 +127,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testParticipantSchemeKnownGLN ()
+  public void testParticipantSchemeKnownGLN ()
   {
     final var aResult = _callParticipantScheme ("0088:4012345678901");
 
@@ -139,7 +139,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testParticipantSchemeKnownNorway ()
+  public void testParticipantSchemeKnownNorway ()
   {
     final var aResult = _callParticipantScheme ("0192:991825827");
 
@@ -151,7 +151,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testParticipantSchemeKnownNorwayFull ()
+  public void testParticipantSchemeKnownNorwayFull ()
   {
     final var aResult = _callParticipantScheme ("iso6523-actorid-upis::0192:991825827");
 
@@ -163,7 +163,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testParticipantSchemeUnknown ()
+  public void testParticipantSchemeUnknown ()
   {
     final var aResult = _callParticipantScheme ("9999:does-not-matter");
 
@@ -173,7 +173,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testParticipantSchemeSyntaxError ()
+  public void testParticipantSchemeSyntaxError ()
   {
     final var aResult = _callParticipantScheme ("somethingCrappy");
 
@@ -187,7 +187,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testDocumentTypeKnownBIS3Invoice ()
+  public void testDocumentTypeKnownBIS3Invoice ()
   {
     final var aResult = _callDocumentType ("urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1");
 
@@ -200,7 +200,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testDocumentTypeKnownBIS3InvoiceFull ()
+  public void testDocumentTypeKnownBIS3InvoiceFull ()
   {
     final var aResult = _callDocumentType ("busdox-docid-qns::urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1");
 
@@ -213,7 +213,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testDocumentTypeUnknown ()
+  public void testDocumentTypeUnknown ()
   {
     final var aResult = _callDocumentType ("busdox-docid-qns::urn:not:a:real##document:type::1.0");
 
@@ -223,13 +223,13 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testDocumentTypeSyntaxError ()
+  public void testDocumentTypeSyntaxError ()
   {
     final var aResult = _callDocumentType ("busdox-docid-qns::urn:not:a:real:document:type::1.0");
 
     assertTrue (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("Invalid Peppol Document Type ID format"), sContent);
+    assertTrue (sContent, sContent.contains ("Invalid Peppol Document Type ID format"));
   }
 
   // -----------------------------------------------------------------------
@@ -237,7 +237,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testProcessIdKnownBIS3Billing ()
+  public void testProcessIdKnownBIS3Billing ()
   {
     final var aResult = _callProcessId ("urn:fdc:peppol.eu:2017:poacc:billing:01:1.0");
 
@@ -249,7 +249,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testProcessIdKnownBIS3BillingFull ()
+  public void testProcessIdKnownBIS3BillingFull ()
   {
     final var aResult = _callProcessId ("cenbii-procid-ubl::urn:fdc:peppol.eu:2017:poacc:billing:01:1.0");
 
@@ -261,7 +261,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testProcessIdUnknown ()
+  public void testProcessIdUnknown ()
   {
     final var aResult = _callProcessId ("urn:not:a:real:process:1.0");
 
@@ -275,7 +275,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testSPISUseCaseKnownMLS ()
+  public void testSPISUseCaseKnownMLS ()
   {
     final var aResult = _callSPISUseCase ("MLS");
 
@@ -287,7 +287,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testSPISUseCaseUnknown ()
+  public void testSPISUseCaseUnknown ()
   {
     final var aResult = _callSPISUseCase ("NONEXISTENT");
 
@@ -301,7 +301,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testListParticipantSchemesDefaultLimit ()
+  public void testListParticipantSchemesDefaultLimit ()
   {
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
@@ -317,7 +317,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testListParticipantSchemesFilterByState ()
+  public void testListParticipantSchemesFilterByState ()
   {
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
@@ -333,7 +333,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testListParticipantSchemesFilterByCountry ()
+  public void testListParticipantSchemesFilterByCountry ()
   {
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
@@ -348,7 +348,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testListParticipantSchemesQuery ()
+  public void testListParticipantSchemesQuery ()
   {
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
@@ -363,7 +363,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testListParticipantSchemesOffsetAndLimit ()
+  public void testListParticipantSchemesOffsetAndLimit ()
   {
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
@@ -386,7 +386,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testListDocumentTypeIdsDefaultLimit ()
+  public void testListDocumentTypeIdsDefaultLimit ()
   {
     final var aResult = m_aTools.listDocumentTypeIdsTool ()
                                 .callHandler ()
@@ -400,7 +400,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testListDocumentTypeIdsFilterByState ()
+  public void testListDocumentTypeIdsFilterByState ()
   {
     final var aResult = m_aTools.listDocumentTypeIdsTool ()
                                 .callHandler ()
@@ -416,7 +416,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testListDocumentTypeIdsQuery ()
+  public void testListDocumentTypeIdsQuery ()
   {
     final var aResult = m_aTools.listDocumentTypeIdsTool ()
                                 .callHandler ()
@@ -431,7 +431,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testListDocumentTypeIdsDomainCommunity ()
+  public void testListDocumentTypeIdsDomainCommunity ()
   {
     final var aResult = m_aTools.listDocumentTypeIdsTool ()
                                 .callHandler ()
@@ -451,7 +451,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testListProcessIdsDefaultLimit ()
+  public void testListProcessIdsDefaultLimit ()
   {
     final var aResult = m_aTools.listProcessIdsTool ()
                                 .callHandler ()
@@ -465,7 +465,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testListProcessIdsFilterByState ()
+  public void testListProcessIdsFilterByState ()
   {
     final var aResult = m_aTools.listProcessIdsTool ()
                                 .callHandler ()
@@ -481,7 +481,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testListProcessIdsQuery ()
+  public void testListProcessIdsQuery ()
   {
     final var aResult = m_aTools.listProcessIdsTool ()
                                 .callHandler ()
@@ -500,7 +500,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testListSPISUseCaseIdsAll ()
+  public void testListSPISUseCaseIdsAll ()
   {
     final var aResult = m_aTools.listSPISUseCaseIdsTool ()
                                 .callHandler ()
@@ -515,7 +515,7 @@ class PeppolCodelistToolsTest
   }
 
   @Test
-  void testListSPISUseCaseIdsFilterByState ()
+  public void testListSPISUseCaseIdsFilterByState ()
   {
     final var aResult = m_aTools.listSPISUseCaseIdsTool ()
                                 .callHandler ()
@@ -534,7 +534,7 @@ class PeppolCodelistToolsTest
   // -----------------------------------------------------------------------
 
   @Test
-  void testInvalidStateFilter ()
+  public void testInvalidStateFilter ()
   {
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
