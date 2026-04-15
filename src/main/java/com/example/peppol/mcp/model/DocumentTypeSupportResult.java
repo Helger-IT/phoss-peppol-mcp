@@ -22,10 +22,11 @@ import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.helger.json.IJsonObject;
+import com.helger.json.JsonArray;
+import com.helger.json.JsonObject;
 import com.helger.xsds.peppol.smp1.EndpointType;
 
-@JsonInclude (JsonInclude.Include.NON_NULL)
 public class DocumentTypeSupportResult
 {
   private String participantId;
@@ -66,6 +67,22 @@ public class DocumentTypeSupportResult
   public List <DocumentTypeEndpointInfo> getEndpoints ()
   {
     return endpoints;
+  }
+
+  @NonNull
+  public IJsonObject getAsJson ()
+  {
+    final JsonObject ret = new JsonObject ();
+    if (participantId != null)
+      ret.add ("participantId", participantId);
+    if (documentTypeId != null)
+      ret.add ("documentTypeId", documentTypeId);
+    ret.add ("supported", supported);
+    final JsonArray aEndpointArray = new JsonArray ();
+    for (final DocumentTypeEndpointInfo e : endpoints)
+      aEndpointArray.add (e.getAsJson ());
+    ret.add ("endpoints", aEndpointArray);
+    return ret;
   }
 
   public void addEndpoint (@NonNull final String sProcessID, @NonNull final EndpointType aEndpoint)

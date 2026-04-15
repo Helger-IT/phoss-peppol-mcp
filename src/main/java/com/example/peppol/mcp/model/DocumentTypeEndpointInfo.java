@@ -20,11 +20,11 @@ import java.security.cert.CertificateException;
 
 import org.jspecify.annotations.NonNull;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.helger.json.IJsonObject;
+import com.helger.json.JsonObject;
 import com.helger.smpclient.peppol.SMPClientReadOnly;
 import com.helger.xsds.peppol.smp1.EndpointType;
 
-@JsonInclude (JsonInclude.Include.NON_NULL)
 public class DocumentTypeEndpointInfo
 {
   private String processID;
@@ -81,6 +81,23 @@ public class DocumentTypeEndpointInfo
   public void setCertificateSubject (final String v)
   {
     this.certificateSubject = v;
+  }
+
+  @NonNull
+  public IJsonObject getAsJson ()
+  {
+    final JsonObject ret = new JsonObject ();
+    if (processID != null)
+      ret.add ("processID", processID);
+    if (endpointUrl != null)
+      ret.add ("endpointUrl", endpointUrl);
+    if (transportProfile != null)
+      ret.add ("transportProfile", transportProfile);
+    if (certificateIssuer != null)
+      ret.add ("certificateIssuer", certificateIssuer);
+    if (certificateSubject != null)
+      ret.add ("certificateSubject", certificateSubject);
+    return ret;
   }
 
   public void init (@NonNull final EndpointType aEndpoint) throws CertificateException

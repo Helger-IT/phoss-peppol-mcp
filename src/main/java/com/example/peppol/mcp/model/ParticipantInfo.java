@@ -16,9 +16,11 @@
  */
 package com.example.peppol.mcp.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import org.jspecify.annotations.NonNull;
 
-@JsonInclude (JsonInclude.Include.NON_NULL)
+import com.helger.json.IJsonObject;
+import com.helger.json.JsonObject;
+
 public class ParticipantInfo
 {
   private String participantId;
@@ -75,5 +77,21 @@ public class ParticipantInfo
   public void setMessage (final String v)
   {
     this.message = v;
+  }
+
+  @NonNull
+  public IJsonObject getAsJson ()
+  {
+    final JsonObject ret = new JsonObject ();
+    if (participantId != null)
+      ret.add ("participantId", participantId);
+    if (network != null)
+      ret.add ("network", network);
+    if (smpUrl != null)
+      ret.add ("smpUrl", smpUrl);
+    ret.add ("registered", registered);
+    if (message != null)
+      ret.add ("message", message);
+    return ret;
   }
 }

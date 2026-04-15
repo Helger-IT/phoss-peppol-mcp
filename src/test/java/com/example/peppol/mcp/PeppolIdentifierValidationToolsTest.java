@@ -59,7 +59,7 @@ public final class PeppolIdentifierValidationToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue ("Expected valid=true for valid participant ID", sContent.contains ("\"valid\" : true"));
+    assertTrue ("Expected valid=true for valid participant ID", sContent.contains ("\"valid\":true"));
   }
 
   @Test
@@ -73,7 +73,7 @@ public final class PeppolIdentifierValidationToolsTest
     assertNotNull (aResult);
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue ("Expected valid=false for invalid participant ID", sContent.contains ("\"valid\" : false"));
+    assertTrue ("Expected valid=false for invalid participant ID", sContent.contains ("\"valid\":false"));
   }
 
   @Test

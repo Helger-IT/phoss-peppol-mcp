@@ -16,8 +16,6 @@
  */
 package com.example.peppol.mcp.tools;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -26,7 +24,9 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.base.string.StringHelper;
-import com.helger.peppolid.IProcessIdentifier;
+import com.helger.json.IJsonObject;
+import com.helger.json.JsonArray;
+import com.helger.json.JsonObject;
 import com.helger.peppolid.peppol.EPeppolCodeListItemState;
 import com.helger.peppolid.peppol.doctype.EPredefinedDocumentTypeIdentifier;
 import com.helger.peppolid.peppol.doctype.IPeppolPredefinedDocumentTypeIdentifier;
@@ -44,8 +44,8 @@ import io.modelcontextprotocol.spec.McpSchema;
 
 /**
  * MCP tools for checking whether Peppol identifiers are present in the official Peppol codelists,
- * and for listing all codelist entries. These tools go beyond syntactic validation: they verify that
- * a given identifier is an officially registered value in the Peppol code lists.
+ * and for listing all codelist entries. These tools go beyond syntactic validation: they verify
+ * that a given identifier is an officially registered value in the Peppol code lists.
  */
 public final class PeppolCodelistTools
 {
@@ -101,24 +101,22 @@ public final class PeppolCodelistTools
   }
 
   @NonNull
-  private static Map <String, Object> _buildListResult (@NonNull final String sCodeListVersion,
-                                                         @NonNull final List <Map <String, Object>> aAllMatching,
-                                                         final int nOffset,
-                                                         final int nLimit)
+  private static IJsonObject _buildListResult (@NonNull final String sCodeListVersion,
+                                               @NonNull final JsonArray aAllMatching,
+                                               final int nOffset,
+                                               final int nLimit)
   {
     final int nTotal = aAllMatching.size ();
     final int nEffectiveOffset = Math.min (nOffset, nTotal);
     final int nEnd = Math.min (nEffectiveOffset + nLimit, nTotal);
-    final var aPage = aAllMatching.subList (nEffectiveOffset, nEnd);
+    final var aPage = aAllMatching.getSubArray (nEffectiveOffset, nEnd);
 
-    final Map <String, Object> aResult = new LinkedHashMap <> ();
-    aResult.put ("codeListVersion", sCodeListVersion);
-    aResult.put ("totalMatchingEntries", Integer.valueOf (nTotal));
-    aResult.put ("offset", Integer.valueOf (nEffectiveOffset));
-    aResult.put ("limit", Integer.valueOf (nLimit));
-    aResult.put ("returnedEntries", Integer.valueOf (aPage.size ()));
-    aResult.put ("entries", aPage);
-    return aResult;
+    return new JsonObject ().add ("codeListVersion", sCodeListVersion)
+                            .add ("totalMatchingEntries", nTotal)
+                            .add ("offset", nEffectiveOffset)
+                            .add ("limit", nLimit)
+                            .add ("returnedEntries", aPage.size ())
+                            .add ("entries", aPage);
   }
 
   // -------------------------------------------------------------------------
@@ -126,7 +124,7 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _checkParticipantIdSchemeInCodelist (@NonNull final String sInput)
+  private IJsonObject _checkParticipantIdSchemeInCodelist (@NonNull final String sInput)
   {
     // Try to parse as a full participant identifier
     final var aPID = Helper.parseParticipantId (sInput, true);
@@ -135,20 +133,20 @@ public final class PeppolCodelistTools
     final int nColon = sValue.indexOf (':');
     final var sISO6523Code = nColon > 0 ? sValue.substring (0, nColon) : sValue;
 
-    final Map <String, Object> aResult = new LinkedHashMap <> ();
-    aResult.put ("iso6523Code", sISO6523Code);
-    aResult.put ("inCodelist", Boolean.valueOf (aScheme != null));
-    aResult.put ("codeListVersion", EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
+    final JsonObject aResult = new JsonObject ();
+    aResult.add ("iso6523Code", sISO6523Code);
+    aResult.add ("inCodelist", aScheme != null);
+    aResult.add ("codeListVersion", EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
 
     if (aScheme != null)
     {
-      aResult.put ("schemeID", aScheme.getSchemeID ());
-      aResult.put ("schemeName", aScheme.getSchemeName ());
-      aResult.put ("schemeAgency", aScheme.getSchemeAgency ());
-      aResult.put ("countryCode", aScheme.getCountryCode ());
-      aResult.put ("state", aScheme.getState ().getID ());
+      aResult.add ("schemeID", aScheme.getSchemeID ());
+      aResult.add ("schemeName", aScheme.getSchemeName ());
+      aResult.add ("schemeAgency", aScheme.getSchemeAgency ());
+      aResult.add ("countryCode", aScheme.getCountryCode ());
+      aResult.add ("state", aScheme.getState ().getID ());
       if (aScheme.getRemovalDate () != null)
-        aResult.put ("removalDate", aScheme.getRemovalDate ().toString ());
+        aResult.add ("removalDate", aScheme.getRemovalDate ().toString ());
     }
 
     return aResult;
@@ -189,30 +187,34 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _checkDocumentTypeIdInCodelist (@NonNull final String sDTID)
+  private IJsonObject _checkDocumentTypeIdInCodelist (@NonNull final String sDTID)
   {
     final var aDTID = Helper.parseDocTypeID (sDTID, true);
     final IPeppolPredefinedDocumentTypeIdentifier aDocTypeID = PredefinedDocumentTypeIdentifierManager.getDocumentTypeIdentifierOfID (aDTID.getURIEncoded ());
 
-    final Map <String, Object> aResult = new LinkedHashMap <> ();
-    aResult.put ("documentTypeId", aDTID.getURIEncoded ());
-    aResult.put ("inCodelist", Boolean.valueOf (aDocTypeID != null));
-    aResult.put ("codeListVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
+    final JsonObject aResult = new JsonObject ();
+    aResult.add ("documentTypeId", aDTID.getURIEncoded ());
+    aResult.add ("inCodelist", aDocTypeID != null);
+    aResult.add ("codeListVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
 
     if (aDocTypeID != null)
     {
-      aResult.put ("commonName", aDocTypeID.getCommonName ());
-      aResult.put ("scheme", aDocTypeID.getScheme ());
-      aResult.put ("state", aDocTypeID.getState ().getID ());
+      aResult.add ("commonName", aDocTypeID.getCommonName ());
+      aResult.add ("scheme", aDocTypeID.getScheme ());
+      aResult.add ("state", aDocTypeID.getState ().getID ());
       if (aDocTypeID.getRemovalDate () != null)
-        aResult.put ("removalDate", aDocTypeID.getRemovalDate ().toString ());
-      aResult.put ("bisVersion", Integer.valueOf (aDocTypeID.getBISVersion ()));
-      aResult.put ("domainCommunity", aDocTypeID.getDomainCommunity ());
-      aResult.put ("issuedByOpenPeppol", Boolean.valueOf (aDocTypeID.isIssuedByOpenPeppol ()));
+        aResult.add ("removalDate", aDocTypeID.getRemovalDate ().toString ());
+      aResult.add ("bisVersion", aDocTypeID.getBISVersion ());
+      aResult.add ("domainCommunity", aDocTypeID.getDomainCommunity ());
+      aResult.add ("issuedByOpenPeppol", aDocTypeID.isIssuedByOpenPeppol ());
 
       final var aProcessIDs = aDocTypeID.getAllProcessIDs ();
       if (aProcessIDs != null && aProcessIDs.isNotEmpty ())
-        aResult.put ("processIDs", aProcessIDs.getAllMapped (IProcessIdentifier::getURIEncoded));
+      {
+        final JsonArray aProcArray = new JsonArray ();
+        aProcessIDs.forEach (aProcID -> aProcArray.add (aProcID.getURIEncoded ()));
+        aResult.add ("processIDs", aProcArray);
+      }
     }
 
     return aResult;
@@ -253,21 +255,21 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _checkProcessIdInCodelist (@NonNull final String sPRID)
+  private IJsonObject _checkProcessIdInCodelist (@NonNull final String sPRID)
   {
     final var aPRID = Helper.parseProcessID (sPRID, true);
     final IPeppolPredefinedProcessIdentifier aProcID = PredefinedProcessIdentifierManager.getProcessIdentifierOfID (aPRID.getURIEncoded ());
 
-    final Map <String, Object> aResult = new LinkedHashMap <> ();
-    aResult.put ("processId", aPRID.getURIEncoded ());
-    aResult.put ("inCodelist", Boolean.valueOf (aProcID != null));
-    aResult.put ("codeListVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
+    final JsonObject aResult = new JsonObject ();
+    aResult.add ("processId", aPRID.getURIEncoded ());
+    aResult.add ("inCodelist", aProcID != null);
+    aResult.add ("codeListVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
 
     if (aProcID != null)
     {
-      aResult.put ("scheme", aProcID.getScheme ());
-      aResult.put ("value", aProcID.getValue ());
-      aResult.put ("state", aProcID.getState ().getID ());
+      aResult.add ("scheme", aProcID.getScheme ());
+      aResult.add ("value", aProcID.getValue ());
+      aResult.add ("state", aProcID.getState ().getID ());
     }
 
     return aResult;
@@ -307,7 +309,7 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _checkSPISUseCaseIdInCodelist (@NonNull final String sUseCaseID)
+  private IJsonObject _checkSPISUseCaseIdInCodelist (@NonNull final String sUseCaseID)
   {
     EPredefinedSPISUseCaseIdentifier aFound = null;
     for (final var e : EPredefinedSPISUseCaseIdentifier.values ())
@@ -317,19 +319,19 @@ public final class PeppolCodelistTools
         break;
       }
 
-    final Map <String, Object> aResult = new LinkedHashMap <> ();
-    aResult.put ("useCaseId", sUseCaseID);
-    aResult.put ("inCodelist", Boolean.valueOf (aFound != null));
-    aResult.put ("codeListVersion", EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION);
+    final JsonObject aResult = new JsonObject ();
+    aResult.add ("useCaseId", sUseCaseID);
+    aResult.add ("inCodelist", aFound != null);
+    aResult.add ("codeListVersion", EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION);
 
     if (aFound != null)
     {
-      aResult.put ("state", aFound.getState ().getID ());
-      aResult.put ("initialRelease", aFound.getInitialRelease ().toString ());
+      aResult.add ("state", aFound.getState ().getID ());
+      aResult.add ("initialRelease", aFound.getInitialRelease ().toString ());
       if (aFound.getDeprecationRelease () != null)
-        aResult.put ("deprecationRelease", aFound.getDeprecationRelease ().toString ());
+        aResult.add ("deprecationRelease", aFound.getDeprecationRelease ().toString ());
       if (aFound.getRemovalDate () != null)
-        aResult.put ("removalDate", aFound.getRemovalDate ().toString ());
+        aResult.add ("removalDate", aFound.getRemovalDate ().toString ());
     }
 
     return aResult;
@@ -368,15 +370,13 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _getCodelistVersion ()
+  private IJsonObject _getCodelistVersion ()
   {
-    final Map <String, Object> aResult = new LinkedHashMap <> ();
-    aResult.put ("participantIdentifierSchemeCodelistVersion",
-                 EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION);
-    aResult.put ("documentTypeCodelistVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION);
-    aResult.put ("processCodelistVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION);
-    aResult.put ("spisUseCaseCodelistVersion", EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION);
-    return aResult;
+    return new JsonObject ().add ("participantIdentifierSchemeCodelistVersion",
+                                  EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION)
+                            .add ("documentTypeCodelistVersion", EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION)
+                            .add ("processCodelistVersion", EPredefinedProcessIdentifier.CODE_LIST_VERSION)
+                            .add ("spisUseCaseCodelistVersion", EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION);
   }
 
   @NonNull
@@ -407,14 +407,14 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _listParticipantIdSchemes (@Nullable final String sState,
-                                                          @Nullable final String sCountryCode,
-                                                          @Nullable final String sQuery,
-                                                          final int nOffset,
-                                                          final int nLimit)
+  private IJsonObject _listParticipantIdSchemes (@Nullable final String sState,
+                                                 @Nullable final String sCountryCode,
+                                                 @Nullable final String sQuery,
+                                                 final int nOffset,
+                                                 final int nLimit)
   {
     final var eStateFilter = _parseStateFilter (sState);
-    final var aMatching = new ArrayList <Map <String, Object>> ();
+    final var aMatching = new JsonArray ();
 
     for (final IPeppolParticipantIdentifierScheme aScheme : PeppolParticipantIdentifierSchemeManager.getAllSchemes ())
     {
@@ -430,22 +430,19 @@ public final class PeppolCodelistTools
                           aScheme.getCountryCode ()))
         continue;
 
-      final Map <String, Object> aEntry = new LinkedHashMap <> ();
-      aEntry.put ("iso6523Code", aScheme.getISO6523Code ());
-      aEntry.put ("schemeID", aScheme.getSchemeID ());
-      aEntry.put ("schemeName", aScheme.getSchemeName ());
-      aEntry.put ("schemeAgency", aScheme.getSchemeAgency ());
-      aEntry.put ("countryCode", aScheme.getCountryCode ());
-      aEntry.put ("state", aScheme.getState ().getID ());
+      final JsonObject aEntry = new JsonObject ();
+      aEntry.add ("iso6523Code", aScheme.getISO6523Code ());
+      aEntry.add ("schemeID", aScheme.getSchemeID ());
+      aEntry.add ("schemeName", aScheme.getSchemeName ());
+      aEntry.add ("schemeAgency", aScheme.getSchemeAgency ());
+      aEntry.add ("countryCode", aScheme.getCountryCode ());
+      aEntry.add ("state", aScheme.getState ().getID ());
       if (aScheme.getRemovalDate () != null)
-        aEntry.put ("removalDate", aScheme.getRemovalDate ().toString ());
+        aEntry.add ("removalDate", aScheme.getRemovalDate ().toString ());
       aMatching.add (aEntry);
     }
 
-    return _buildListResult (EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION,
-                             aMatching,
-                             nOffset,
-                             nLimit);
+    return _buildListResult (EPredefinedParticipantIdentifierScheme.CODE_LIST_VERSION, aMatching, nOffset, nLimit);
   }
 
   @NonNull
@@ -485,8 +482,8 @@ public final class PeppolCodelistTools
                                                                                             "integer",
                                                                                             "description",
                                                                                             "Maximum number of entries to return (default " +
-                                                                                                                              DEFAULT_LIMIT +
-                                                                                                                              ")")),
+                                                                                                           DEFAULT_LIMIT +
+                                                                                                           ")")),
                                                                             List.of (),
                                                                             Boolean.FALSE,
                                                                             null,
@@ -513,40 +510,36 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _listDocumentTypeIds (@Nullable final String sState,
-                                                      @Nullable final String sQuery,
-                                                      @Nullable final String sDomainCommunity,
-                                                      final int nOffset,
-                                                      final int nLimit)
+  private IJsonObject _listDocumentTypeIds (@Nullable final String sState,
+                                            @Nullable final String sQuery,
+                                            @Nullable final String sDomainCommunity,
+                                            final int nOffset,
+                                            final int nLimit)
   {
     final var eStateFilter = _parseStateFilter (sState);
-    final var aMatching = new ArrayList <Map <String, Object>> ();
+    final var aMatching = new JsonArray ();
 
     for (final IPeppolPredefinedDocumentTypeIdentifier aDT : PredefinedDocumentTypeIdentifierManager.getAllDocumentTypeIdentifiers ())
     {
       if (eStateFilter != null && aDT.getState () != eStateFilter)
         continue;
-      if (StringHelper.isNotEmpty (sDomainCommunity) &&
-          !sDomainCommunity.equalsIgnoreCase (aDT.getDomainCommunity ()))
+      if (StringHelper.isNotEmpty (sDomainCommunity) && !sDomainCommunity.equalsIgnoreCase (aDT.getDomainCommunity ()))
         continue;
       if (!_matchesQuery (sQuery, aDT.getCommonName (), aDT.getValue ()))
         continue;
 
-      final Map <String, Object> aEntry = new LinkedHashMap <> ();
-      aEntry.put ("documentTypeId", aDT.getScheme () + "::" + aDT.getValue ());
-      aEntry.put ("commonName", aDT.getCommonName ());
-      aEntry.put ("state", aDT.getState ().getID ());
-      aEntry.put ("bisVersion", Integer.valueOf (aDT.getBISVersion ()));
-      aEntry.put ("domainCommunity", aDT.getDomainCommunity ());
+      final JsonObject aEntry = new JsonObject ();
+      aEntry.add ("documentTypeId", aDT.getScheme () + "::" + aDT.getValue ());
+      aEntry.add ("commonName", aDT.getCommonName ());
+      aEntry.add ("state", aDT.getState ().getID ());
+      aEntry.add ("bisVersion", aDT.getBISVersion ());
+      aEntry.add ("domainCommunity", aDT.getDomainCommunity ());
       if (aDT.getRemovalDate () != null)
-        aEntry.put ("removalDate", aDT.getRemovalDate ().toString ());
+        aEntry.add ("removalDate", aDT.getRemovalDate ().toString ());
       aMatching.add (aEntry);
     }
 
-    return _buildListResult (EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION,
-                             aMatching,
-                             nOffset,
-                             nLimit);
+    return _buildListResult (EPredefinedDocumentTypeIdentifier.CODE_LIST_VERSION, aMatching, nOffset, nLimit);
   }
 
   @NonNull
@@ -587,8 +580,8 @@ public final class PeppolCodelistTools
                                                                                             "integer",
                                                                                             "description",
                                                                                             "Maximum number of entries to return (default " +
-                                                                                                                              DEFAULT_LIMIT +
-                                                                                                                              ")")),
+                                                                                                           DEFAULT_LIMIT +
+                                                                                                           ")")),
                                                                             List.of (),
                                                                             Boolean.FALSE,
                                                                             null,
@@ -615,13 +608,13 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _listProcessIds (@Nullable final String sState,
-                                                 @Nullable final String sQuery,
-                                                 final int nOffset,
-                                                 final int nLimit)
+  private IJsonObject _listProcessIds (@Nullable final String sState,
+                                       @Nullable final String sQuery,
+                                       final int nOffset,
+                                       final int nLimit)
   {
     final var eStateFilter = _parseStateFilter (sState);
-    final var aMatching = new ArrayList <Map <String, Object>> ();
+    final var aMatching = new JsonArray ();
 
     for (final IPeppolPredefinedProcessIdentifier aProc : PredefinedProcessIdentifierManager.getAllProcessIdentifiers ())
     {
@@ -630,18 +623,15 @@ public final class PeppolCodelistTools
       if (!_matchesQuery (sQuery, aProc.getValue ()))
         continue;
 
-      final Map <String, Object> aEntry = new LinkedHashMap <> ();
-      aEntry.put ("processId", aProc.getScheme () + "::" + aProc.getValue ());
-      aEntry.put ("scheme", aProc.getScheme ());
-      aEntry.put ("value", aProc.getValue ());
-      aEntry.put ("state", aProc.getState ().getID ());
+      final JsonObject aEntry = new JsonObject ();
+      aEntry.add ("processId", aProc.getScheme () + "::" + aProc.getValue ());
+      aEntry.add ("scheme", aProc.getScheme ());
+      aEntry.add ("value", aProc.getValue ());
+      aEntry.add ("state", aProc.getState ().getID ());
       aMatching.add (aEntry);
     }
 
-    return _buildListResult (EPredefinedProcessIdentifier.CODE_LIST_VERSION,
-                             aMatching,
-                             nOffset,
-                             nLimit);
+    return _buildListResult (EPredefinedProcessIdentifier.CODE_LIST_VERSION, aMatching, nOffset, nLimit);
   }
 
   @NonNull
@@ -677,8 +667,8 @@ public final class PeppolCodelistTools
                                                                                             "integer",
                                                                                             "description",
                                                                                             "Maximum number of entries to return (default " +
-                                                                                                                              DEFAULT_LIMIT +
-                                                                                                                              ")")),
+                                                                                                           DEFAULT_LIMIT +
+                                                                                                           ")")),
                                                                             List.of (),
                                                                             Boolean.FALSE,
                                                                             null,
@@ -700,13 +690,13 @@ public final class PeppolCodelistTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private Map <String, Object> _listSPISUseCaseIds (@Nullable final String sState,
-                                                     @Nullable final String sQuery,
-                                                     final int nOffset,
-                                                     final int nLimit)
+  private IJsonObject _listSPISUseCaseIds (@Nullable final String sState,
+                                           @Nullable final String sQuery,
+                                           final int nOffset,
+                                           final int nLimit)
   {
     final var eStateFilter = _parseStateFilter (sState);
-    final var aMatching = new ArrayList <Map <String, Object>> ();
+    final var aMatching = new JsonArray ();
 
     for (final var aUseCase : EPredefinedSPISUseCaseIdentifier.values ())
     {
@@ -715,21 +705,18 @@ public final class PeppolCodelistTools
       if (!_matchesQuery (sQuery, aUseCase.getUseCaseID ()))
         continue;
 
-      final Map <String, Object> aEntry = new LinkedHashMap <> ();
-      aEntry.put ("useCaseId", aUseCase.getUseCaseID ());
-      aEntry.put ("state", aUseCase.getState ().getID ());
-      aEntry.put ("initialRelease", aUseCase.getInitialRelease ().toString ());
+      final JsonObject aEntry = new JsonObject ();
+      aEntry.add ("useCaseId", aUseCase.getUseCaseID ());
+      aEntry.add ("state", aUseCase.getState ().getID ());
+      aEntry.add ("initialRelease", aUseCase.getInitialRelease ().toString ());
       if (aUseCase.getDeprecationRelease () != null)
-        aEntry.put ("deprecationRelease", aUseCase.getDeprecationRelease ().toString ());
+        aEntry.add ("deprecationRelease", aUseCase.getDeprecationRelease ().toString ());
       if (aUseCase.getRemovalDate () != null)
-        aEntry.put ("removalDate", aUseCase.getRemovalDate ().toString ());
+        aEntry.add ("removalDate", aUseCase.getRemovalDate ().toString ());
       aMatching.add (aEntry);
     }
 
-    return _buildListResult (EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION,
-                             aMatching,
-                             nOffset,
-                             nLimit);
+    return _buildListResult (EPredefinedSPISUseCaseIdentifier.CODE_LIST_VERSION, aMatching, nOffset, nLimit);
   }
 
   @NonNull
@@ -763,8 +750,8 @@ public final class PeppolCodelistTools
                                                                                             "integer",
                                                                                             "description",
                                                                                             "Maximum number of entries to return (default " +
-                                                                                                                              DEFAULT_LIMIT +
-                                                                                                                              ")")),
+                                                                                                           DEFAULT_LIMIT +
+                                                                                                           ")")),
                                                                             List.of (),
                                                                             Boolean.FALSE,
                                                                             null,

@@ -88,6 +88,6 @@ public final class PeppolSmpToolsTest
     // The tool gracefully handles non-existent participants: isError=false, registered=false
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
-    assertTrue ("Expected registered=false for non-existent participant", sContent.contains ("\"registered\" : false"));
+    assertTrue ("Expected registered=false for non-existent participant", sContent.contains ("\"registered\":false"));
   }
 }

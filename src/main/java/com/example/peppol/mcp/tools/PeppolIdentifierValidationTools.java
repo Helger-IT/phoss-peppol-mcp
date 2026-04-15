@@ -21,10 +21,11 @@ import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.json.JsonObject;
+
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * MCP tools for syntactic validation of Peppol identifiers. These tools check whether an identifier
@@ -33,8 +34,6 @@ import tools.jackson.databind.ObjectMapper;
  */
 public class PeppolIdentifierValidationTools
 {
-  private static final ObjectMapper MAPPER = new ObjectMapper ();
-
   // -------------------------------------------------------------------------
   // Tool 1: Validate participant identifier syntax
   // -------------------------------------------------------------------------
@@ -47,23 +46,16 @@ public class PeppolIdentifierValidationTools
       final var aPID = Helper.parseParticipantId (sPID, false);
       if (aPID != null)
       {
-        final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
-                                   .writeValueAsString (Map.of ("valid",
-                                                                Boolean.TRUE,
-                                                                "scheme",
-                                                                aPID.getScheme (),
-                                                                "value",
-                                                                aPID.getValue (),
-                                                                "uriEncoded",
-                                                                aPID.getURIEncoded ()));
+        final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", true)
+                                                                                .add ("scheme", aPID.getScheme ())
+                                                                                .add ("value", aPID.getValue ())
+                                                                                .add ("uriEncoded", aPID.getURIEncoded ()));
         return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
       }
 
-      final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
-                                 .writeValueAsString (Map.of ("valid",
-                                                              Boolean.FALSE,
-                                                              "error",
-                                                              "Not a valid Peppol Participant identifier. Expected format: scheme:value (e.g. 0088:4012345678901)"));
+      final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", false)
+                                                                              .add ("error",
+                                                                                    "Not a valid Peppol Participant identifier. Expected format: scheme:value (e.g. 0088:4012345678901)"));
       return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
     }
     catch (final Exception ex)
@@ -116,22 +108,15 @@ public class PeppolIdentifierValidationTools
       final var aDTID = Helper.parseDocTypeID (sDTID, false);
       if (aDTID != null)
       {
-        final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
-                                   .writeValueAsString (Map.of ("valid",
-                                                                Boolean.TRUE,
-                                                                "scheme",
-                                                                aDTID.getScheme (),
-                                                                "value",
-                                                                aDTID.getValue (),
-                                                                "uriEncoded",
-                                                                aDTID.getURIEncoded ()));
+        final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", true)
+                                                                                .add ("scheme", aDTID.getScheme ())
+                                                                                .add ("value", aDTID.getValue ())
+                                                                                .add ("uriEncoded", aDTID.getURIEncoded ()));
         return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
       }
-      final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
-                                 .writeValueAsString (Map.of ("valid",
-                                                              Boolean.FALSE,
-                                                              "error",
-                                                              "Not a valid Peppol Document Type identifier"));
+      final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", false)
+                                                                              .add ("error",
+                                                                                    "Not a valid Peppol Document Type identifier"));
       return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
     }
     catch (final Exception ex)
@@ -184,22 +169,15 @@ public class PeppolIdentifierValidationTools
       final var aPRID = Helper.parseProcessID (sPRID, false);
       if (aPRID != null)
       {
-        final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
-                                   .writeValueAsString (Map.of ("valid",
-                                                                Boolean.TRUE,
-                                                                "scheme",
-                                                                aPRID.getScheme (),
-                                                                "value",
-                                                                aPRID.getValue (),
-                                                                "uriEncoded",
-                                                                aPRID.getURIEncoded ()));
+        final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", true)
+                                                                                .add ("scheme", aPRID.getScheme ())
+                                                                                .add ("value", aPRID.getValue ())
+                                                                                .add ("uriEncoded", aPRID.getURIEncoded ()));
         return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
       }
-      final String sJSON = MAPPER.writerWithDefaultPrettyPrinter ()
-                                 .writeValueAsString (Map.of ("valid",
-                                                              Boolean.FALSE,
-                                                              "error",
-                                                              "Not a valid Peppol Process identifier"));
+      final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", false)
+                                                                              .add ("error",
+                                                                                    "Not a valid Peppol Process identifier"));
       return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
     }
     catch (final Exception ex)

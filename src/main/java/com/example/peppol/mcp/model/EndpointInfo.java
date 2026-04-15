@@ -16,9 +16,11 @@
  */
 package com.example.peppol.mcp.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import org.jspecify.annotations.NonNull;
 
-@JsonInclude (JsonInclude.Include.NON_NULL)
+import com.helger.json.IJsonObject;
+import com.helger.json.JsonObject;
+
 public class EndpointInfo extends DocumentTypeEndpointInfo
 {
   private String participantID;
@@ -53,5 +55,21 @@ public class EndpointInfo extends DocumentTypeEndpointInfo
   public void setFound (final boolean v)
   {
     this.found = v;
+  }
+
+  @Override
+  @NonNull
+  public IJsonObject getAsJson ()
+  {
+    final JsonObject ret = new JsonObject ();
+    if (participantID != null)
+      ret.add ("participantID", participantID);
+    if (documentTypeID != null)
+      ret.add ("documentTypeID", documentTypeID);
+    ret.add ("found", found);
+    // Add parent fields
+    for (final var aEntry : super.getAsJson ())
+      ret.add (aEntry.getKey (), aEntry.getValue ());
+    return ret;
   }
 }

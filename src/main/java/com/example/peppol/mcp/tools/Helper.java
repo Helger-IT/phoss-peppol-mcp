@@ -23,6 +23,9 @@ import org.slf4j.LoggerFactory;
 
 import com.helger.annotation.concurrent.Immutable;
 import com.helger.base.functional.IThrowingSupplier;
+import com.helger.json.IJson;
+import com.helger.json.serialize.JsonWriter;
+import com.helger.json.serialize.JsonWriterSettings;
 import com.helger.peppolid.IDocumentTypeIdentifier;
 import com.helger.peppolid.IParticipantIdentifier;
 import com.helger.peppolid.IProcessIdentifier;
@@ -30,24 +33,23 @@ import com.helger.peppolid.factory.PeppolIdentifierFactory;
 
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import tools.jackson.databind.ObjectMapper;
 
 @Immutable
 final class Helper
 {
   private static final Logger LOG = LoggerFactory.getLogger (Helper.class);
-  static final ObjectMapper MAPPER = new ObjectMapper ();
+  static final JsonWriter JSON_WRITER = new JsonWriter (JsonWriterSettings.DEFAULT_SETTINGS_FORMATTED);
 
   private Helper ()
   {}
 
   @NonNull
-  static CallToolResult executeWithErrorHandling (@NonNull final IThrowingSupplier <?, Exception> aSupplier)
+  static CallToolResult executeWithErrorHandling (@NonNull final IThrowingSupplier <IJson, Exception> aSupplier)
   {
     try
     {
-      final Object aResult = aSupplier.get ();
-      final String sJson = MAPPER.writerWithDefaultPrettyPrinter ().writeValueAsString (aResult);
+      final IJson aResult = aSupplier.get ();
+      final String sJson = JSON_WRITER.writeAsString (aResult);
       return McpSchema.CallToolResult.builder ().addTextContent (sJson).isError (Boolean.FALSE).build ();
     }
     catch (final Exception ex)

@@ -22,8 +22,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,13 +35,17 @@ import com.example.peppol.mcp.CPhossPeppolMcp;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.base.string.StringHelper;
 import com.helger.http.CHttpHeader;
+import com.helger.json.IJson;
+import com.helger.json.IJsonArray;
+import com.helger.json.IJsonObject;
+import com.helger.json.JsonArray;
+import com.helger.json.JsonObject;
+import com.helger.json.serialize.JsonReader;
 import com.helger.peppol.servicedomain.EPeppolNetwork;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
 /**
  * MCP tools wrapping the Peppol Directory REST API (directory.peppol.eu). The Peppol Directory
@@ -53,7 +55,6 @@ import tools.jackson.databind.ObjectMapper;
 public class PeppolDirectoryTools
 {
   private static final Logger LOG = LoggerFactory.getLogger (PeppolDirectoryTools.class);
-  private static final ObjectMapper MAPPER = new ObjectMapper ();
 
   private final EPeppolNetwork m_eNetwork;
   private final HttpClient m_aHttpClient = HttpClient.newHttpClient ();
@@ -71,49 +72,83 @@ public class PeppolDirectoryTools
   }
 
   @NonNull
-  private List <Map <String, Object>> _parseMatches (@NonNull final JsonNode aRoot)
+  private IJsonArray _parseMatches (@NonNull final IJsonObject aRoot)
   {
-    final List <Map <String, Object>> aResults = new ArrayList <> ();
-    if (!aRoot.has ("matches"))
+    final JsonArray aResults = new JsonArray ();
+    final IJsonArray aMatches = aRoot.getAsArray ("matches");
+    if (aMatches == null)
       return aResults;
 
-    aRoot.get ("matches").forEach (match -> {
-      final Map <String, Object> aEntry = new LinkedHashMap <> ();
+    for (final IJson aMatchJson : aMatches)
+    {
+      if (!aMatchJson.isObject ())
+        continue;
+      final IJsonObject aMatch = aMatchJson.getAsObject ();
+      final JsonObject aEntry = new JsonObject ();
 
-      if (match.has ("participantID"))
+      final IJson aPIDJson = aMatch.get ("participantID");
+      if (aPIDJson != null)
       {
-        final JsonNode aPIDNode = match.get ("participantID");
-        if (aPIDNode.isObject ())
-          aEntry.put ("participantId",
-                      aPIDNode.path ("scheme").asString ("") + "::" + aPIDNode.path ("value").asString (""));
+        if (aPIDJson.isObject ())
+        {
+          final IJsonObject aPIDObj = aPIDJson.getAsObject ();
+          final Object aScheme = aPIDObj.getValue ("scheme");
+          final Object aValue = aPIDObj.getValue ("value");
+          aEntry.add ("participantId",
+                      (aScheme != null ? aScheme.toString () : "") + "::" + (aValue != null ? aValue.toString () : ""));
+        }
         else
-          aEntry.put ("participantId", aPIDNode.asString ());
+          if (aPIDJson.isValue ())
+            aEntry.add ("participantId", String.valueOf (aPIDJson.getAsValue ().getValue ()));
       }
 
-      if (match.has ("entities") && match.get ("entities").isArray ())
+      final IJsonArray aEntities = aMatch.getAsArray ("entities");
+      if (aEntities != null)
       {
-        match.get ("entities").forEach (entity -> {
-          if (entity.has ("name") && entity.get ("name").isArray ())
-            entity.get ("name").forEach (n -> aEntry.put ("companyName", n.get ("name").asString ()));
-          if (entity.has ("countryCode"))
-            aEntry.put ("country", entity.get ("countryCode").asString ());
-        });
+        for (final IJson aEntityJson : aEntities)
+        {
+          if (!aEntityJson.isObject ())
+            continue;
+          final IJsonObject aEntity = aEntityJson.getAsObject ();
+          final IJsonArray aNames = aEntity.getAsArray ("name");
+          if (aNames != null)
+            for (final IJson aNameJson : aNames)
+              if (aNameJson.isObject ())
+              {
+                final Object aName = aNameJson.getAsObject ().getValue ("name");
+                if (aName != null)
+                  aEntry.add ("companyName", aName.toString ());
+              }
+          final IJson aCC = aEntity.get ("countryCode");
+          if (aCC != null && aCC.isValue ())
+            aEntry.add ("country", String.valueOf (aCC.getAsValue ().getValue ()));
+        }
       }
 
-      if (match.has ("docTypes") && match.get ("docTypes").isArray ())
+      final IJsonArray aDocTypes = aMatch.getAsArray ("docTypes");
+      if (aDocTypes != null)
       {
-        final List <String> aDocTypes = new ArrayList <> ();
-        match.get ("docTypes").forEach (dt -> {
-          if (dt.isObject ())
-            aDocTypes.add (dt.path ("scheme").asString ("") + "::" + dt.path ("value").asString (""));
+        final JsonArray aDocTypeList = new JsonArray ();
+        for (final IJson aDTJson : aDocTypes)
+        {
+          if (aDTJson.isObject ())
+          {
+            final IJsonObject aDTObj = aDTJson.getAsObject ();
+            final Object aScheme = aDTObj.getValue ("scheme");
+            final Object aValue = aDTObj.getValue ("value");
+            aDocTypeList.add ((aScheme != null ? aScheme.toString () : "") +
+                              "::" +
+                              (aValue != null ? aValue.toString () : ""));
+          }
           else
-            aDocTypes.add (dt.asString ());
-        });
-        aEntry.put ("supportedDocumentTypes", aDocTypes);
+            if (aDTJson.isValue ())
+              aDocTypeList.add (String.valueOf (aDTJson.getAsValue ().getValue ()));
+        }
+        aEntry.add ("supportedDocumentTypes", aDocTypeList);
       }
 
       aResults.add (aEntry);
-    });
+    }
 
     return aResults;
   }
@@ -166,21 +201,20 @@ public class PeppolDirectoryTools
       final long nTotalResultCount = aResponse.headers ()
                                               .firstValueAsLong ("total-result-count")
                                               .orElse (-1);
-      final JsonNode aRoot = MAPPER.readTree (aResponse.body ());
+      final IJsonObject aRoot = JsonReader.builder ().source (aResponse.body ()).readAsObject ();
       final var aResults = _parseMatches (aRoot);
 
-      final Map <String, Object> aResponseMap = new LinkedHashMap <> ();
-      aResponseMap.put ("query", sQuery);
-      aResponseMap.put ("network", m_eNetwork.name ());
-      aResponseMap.put ("country", sCountryCode != null ? sCountryCode : "all");
+      final JsonObject aResponseObj = new JsonObject ();
+      aResponseObj.add ("query", sQuery);
+      aResponseObj.add ("network", m_eNetwork.name ());
+      aResponseObj.add ("country", sCountryCode != null ? sCountryCode : "all");
       if (nTotalResultCount >= 0)
-        aResponseMap.put ("totalResultCount", Long.valueOf (nTotalResultCount));
-      aResponseMap.put ("returnedMatches", Integer.valueOf (aResults.size ()));
-      aResponseMap.put ("results", aResults);
+        aResponseObj.add ("totalResultCount", nTotalResultCount);
+      aResponseObj.add ("returnedMatches", aResults.size ());
+      aResponseObj.add ("results", aResults);
 
       return McpSchema.CallToolResult.builder ()
-                                     .addTextContent (MAPPER.writerWithDefaultPrettyPrinter ()
-                                                            .writeValueAsString (aResponseMap))
+                                     .addTextContent (Helper.JSON_WRITER.writeAsString (aResponseObj))
                                      .isError (Boolean.FALSE)
                                      .build ();
     }

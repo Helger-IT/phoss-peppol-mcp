@@ -133,9 +133,9 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : true"));
-    assertTrue (sContent.contains ("\"iso6523Code\" : \"0088\""));
-    assertTrue (sContent.contains ("\"schemeID\" : \"GLN\""));
+    assertTrue (sContent.contains ("\"inCodelist\":true"));
+    assertTrue (sContent.contains ("\"iso6523Code\":\"0088\""));
+    assertTrue (sContent.contains ("\"schemeID\":\"GLN\""));
   }
 
   @Test
@@ -145,9 +145,9 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : true"));
-    assertTrue (sContent.contains ("\"iso6523Code\" : \"0192\""));
-    assertTrue (sContent.contains ("\"countryCode\" : \"NO\""));
+    assertTrue (sContent.contains ("\"inCodelist\":true"));
+    assertTrue (sContent.contains ("\"iso6523Code\":\"0192\""));
+    assertTrue (sContent.contains ("\"countryCode\":\"NO\""));
   }
 
   @Test
@@ -157,9 +157,9 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : true"));
-    assertTrue (sContent.contains ("\"iso6523Code\" : \"0192\""));
-    assertTrue (sContent.contains ("\"countryCode\" : \"NO\""));
+    assertTrue (sContent.contains ("\"inCodelist\":true"));
+    assertTrue (sContent.contains ("\"iso6523Code\":\"0192\""));
+    assertTrue (sContent.contains ("\"countryCode\":\"NO\""));
   }
 
   @Test
@@ -169,7 +169,7 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : false"));
+    assertTrue (sContent.contains ("\"inCodelist\":false"));
   }
 
   @Test
@@ -193,7 +193,7 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : true"));
+    assertTrue (sContent.contains ("\"inCodelist\":true"));
     assertTrue (sContent.contains ("\"commonName\""));
     assertTrue (sContent.contains ("\"domainCommunity\""));
     assertTrue (sContent.contains ("\"processIDs\""));
@@ -206,7 +206,7 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : true"));
+    assertTrue (sContent.contains ("\"inCodelist\":true"));
     assertTrue (sContent.contains ("\"commonName\""));
     assertTrue (sContent.contains ("\"domainCommunity\""));
     assertTrue (sContent.contains ("\"processIDs\""));
@@ -219,7 +219,7 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : false"));
+    assertTrue (sContent.contains ("\"inCodelist\":false"));
   }
 
   @Test
@@ -243,9 +243,9 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : true"));
-    assertTrue (sContent.contains ("\"state\" : \"act\""));
-    assertTrue (sContent.contains ("\"scheme\" : \"cenbii-procid-ubl\""));
+    assertTrue (sContent.contains ("\"inCodelist\":true"));
+    assertTrue (sContent.contains ("\"state\":\"act\""));
+    assertTrue (sContent.contains ("\"scheme\":\"cenbii-procid-ubl\""));
   }
 
   @Test
@@ -255,9 +255,9 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : true"));
-    assertTrue (sContent.contains ("\"state\" : \"act\""));
-    assertTrue (sContent.contains ("\"scheme\" : \"cenbii-procid-ubl\""));
+    assertTrue (sContent.contains ("\"inCodelist\":true"));
+    assertTrue (sContent.contains ("\"state\":\"act\""));
+    assertTrue (sContent.contains ("\"scheme\":\"cenbii-procid-ubl\""));
   }
 
   @Test
@@ -267,7 +267,7 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : false"));
+    assertTrue (sContent.contains ("\"inCodelist\":false"));
   }
 
   // -----------------------------------------------------------------------
@@ -281,8 +281,8 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : true"));
-    assertTrue (sContent.contains ("\"state\" : \"act\""));
+    assertTrue (sContent.contains ("\"inCodelist\":true"));
+    assertTrue (sContent.contains ("\"state\":\"act\""));
     assertTrue (sContent.contains ("\"initialRelease\""));
   }
 
@@ -293,7 +293,7 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"inCodelist\" : false"));
+    assertTrue (sContent.contains ("\"inCodelist\":false"));
   }
 
   // -----------------------------------------------------------------------
@@ -312,7 +312,7 @@ public final class PeppolCodelistToolsTest
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
     assertTrue (sContent.contains ("\"returnedEntries\""));
-    assertTrue (sContent.contains ("\"limit\" : " + 50));
+    assertTrue (sContent.contains ("\"limit\":" + 50));
     assertTrue (sContent.contains ("\"entries\""));
   }
 
@@ -328,8 +328,8 @@ public final class PeppolCodelistToolsTest
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
-    assertFalse (sContent.contains ("\"state\" : \"dep\""));
-    assertFalse (sContent.contains ("\"state\" : \"rem\""));
+    assertFalse (sContent.contains ("\"state\":\"dep\""));
+    assertFalse (sContent.contains ("\"state\":\"rem\""));
   }
 
   @Test
@@ -344,7 +344,7 @@ public final class PeppolCodelistToolsTest
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
-    assertTrue (sContent.contains ("\"countryCode\" : \"NO\""));
+    assertTrue (sContent.contains ("\"countryCode\":\"NO\""));
   }
 
   @Test
@@ -359,7 +359,7 @@ public final class PeppolCodelistToolsTest
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
-    assertTrue (sContent.contains ("\"schemeID\" : \"GLN\""));
+    assertTrue (sContent.contains ("\"schemeID\":\"GLN\""));
   }
 
   @Test
@@ -376,9 +376,9 @@ public final class PeppolCodelistToolsTest
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
-    assertTrue (sContent.contains ("\"offset\" : 2"));
-    assertTrue (sContent.contains ("\"limit\" : 3"));
-    assertTrue (sContent.contains ("\"returnedEntries\" : 3"));
+    assertTrue (sContent.contains ("\"offset\":2"));
+    assertTrue (sContent.contains ("\"limit\":3"));
+    assertTrue (sContent.contains ("\"returnedEntries\":3"));
   }
 
   // -----------------------------------------------------------------------
@@ -396,7 +396,7 @@ public final class PeppolCodelistToolsTest
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
-    assertTrue (sContent.contains ("\"limit\" : " + 50));
+    assertTrue (sContent.contains ("\"limit\":" + 50));
   }
 
   @Test
@@ -411,8 +411,8 @@ public final class PeppolCodelistToolsTest
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
-    assertFalse (sContent.contains ("\"state\" : \"dep\""));
-    assertFalse (sContent.contains ("\"state\" : \"rem\""));
+    assertFalse (sContent.contains ("\"state\":\"dep\""));
+    assertFalse (sContent.contains ("\"state\":\"rem\""));
   }
 
   @Test
@@ -442,8 +442,8 @@ public final class PeppolCodelistToolsTest
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
-    assertTrue (sContent.contains ("\"domainCommunity\" : \"PRAC\""));
-    assertFalse (sContent.contains ("\"domainCommunity\" : \"POAC\""));
+    assertTrue (sContent.contains ("\"domainCommunity\":\"PRAC\""));
+    assertFalse (sContent.contains ("\"domainCommunity\":\"POAC\""));
   }
 
   // -----------------------------------------------------------------------
@@ -461,7 +461,7 @@ public final class PeppolCodelistToolsTest
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
-    assertTrue (sContent.contains ("\"limit\" : " + 50));
+    assertTrue (sContent.contains ("\"limit\":" + 50));
   }
 
   @Test
@@ -476,8 +476,8 @@ public final class PeppolCodelistToolsTest
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
-    assertFalse (sContent.contains ("\"state\" : \"dep\""));
-    assertFalse (sContent.contains ("\"state\" : \"rem\""));
+    assertFalse (sContent.contains ("\"state\":\"dep\""));
+    assertFalse (sContent.contains ("\"state\":\"rem\""));
   }
 
   @Test
@@ -511,7 +511,7 @@ public final class PeppolCodelistToolsTest
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
     assertTrue (sContent.contains ("\"entries\""));
-    assertTrue (sContent.contains ("\"useCaseId\" : \"MLS\""));
+    assertTrue (sContent.contains ("\"useCaseId\":\"MLS\""));
   }
 
   @Test
@@ -526,7 +526,7 @@ public final class PeppolCodelistToolsTest
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
     assertTrue (sContent.contains ("\"totalMatchingEntries\""));
-    assertTrue (sContent.contains ("\"useCaseId\" : \"MLS\""));
+    assertTrue (sContent.contains ("\"useCaseId\":\"MLS\""));
   }
 
   // -----------------------------------------------------------------------
