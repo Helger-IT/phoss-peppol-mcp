@@ -21,8 +21,10 @@ import java.io.PrintWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.example.peppol.mcp.tools.PeppolCertificateTools;
 import com.example.peppol.mcp.tools.PeppolCodelistTools;
 import com.example.peppol.mcp.tools.PeppolDirectoryTools;
+import com.example.peppol.mcp.tools.PeppolDnsTools;
 import com.example.peppol.mcp.tools.PeppolIdentifierValidationTools;
 import com.example.peppol.mcp.tools.PeppolSmpTools;
 import com.helger.peppol.servicedomain.EPeppolNetwork;
@@ -103,9 +105,11 @@ public class PhossPeppolMcpServer implements Runnable
 
     // Instantiate tool providers
     final PeppolSmpTools aSmpTools = new PeppolSmpTools (eNetwork);
+    final PeppolDnsTools aDnsTools = new PeppolDnsTools (eNetwork);
     final PeppolDirectoryTools aDirectoryTools = new PeppolDirectoryTools (eNetwork);
     final PeppolIdentifierValidationTools aValidationTools = new PeppolIdentifierValidationTools ();
     final PeppolCodelistTools aCodelistTools = new PeppolCodelistTools ();
+    final PeppolCertificateTools aCertificateTools = new PeppolCertificateTools ();
 
     // Build and start the MCP server
     final McpSyncServer server = McpServer.sync (new StdioServerTransportProvider (McpJsonDefaults.getMapper ()))
@@ -119,6 +123,12 @@ public class PhossPeppolMcpServer implements Runnable
                                                   aSmpTools.lookupParticipantTool (),
                                                   aSmpTools.checkDocumentTypeSupportTool (),
                                                   aSmpTools.getEndpointUrlTool (),
+                                                  aSmpTools.getSmpServiceGroupsTool (),
+                                                  aSmpTools.getSmpSignatureInfoTool (),
+                                                  // DNS resolution
+                                                  aDnsTools.resolvePeppolDnsTool (),
+                                                  // Certificate validation
+                                                  aCertificateTools.checkCertificateChainTool (),
                                                   // Register all Peppol Directory tools
                                                   aDirectoryTools.searchParticipantsByNameTool (),
                                                   // Syntactic validation tools

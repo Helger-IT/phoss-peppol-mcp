@@ -90,4 +90,65 @@ public final class PeppolSmpToolsTest
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
     assertTrue ("Expected registered=false for non-existent participant", sContent.contains ("\"registered\":false"));
   }
+
+  @Test
+  public void testGetServiceGroupsKnownParticipant ()
+  {
+    final var aResult = m_aTools.getSmpServiceGroupsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("get_smp_service_groups",
+                                                                       Map.of ("participantId", "0192:991825827")));
+    assertNotNull (aResult);
+    assertNotNull (aResult.content ());
+    assertFalse (aResult.content ().isEmpty ());
+    // Don't assert specific document types — just that the tool produced a structured response
+    final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
+    assertTrue ("Expected participantId in response: " + sContent, sContent.contains ("\"participantId\":"));
+  }
+
+  @Test
+  public void testGetServiceGroupsInvalidParticipantId ()
+  {
+    final var aResult = m_aTools.getSmpServiceGroupsTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("get_smp_service_groups",
+                                                                       Map.of ("participantId", "not-a-valid-pid")));
+    assertNotNull (aResult);
+    assertTrue ("Expected isError=true for malformed participant ID", aResult.isError ().booleanValue ());
+  }
+
+  @Test
+  public void testGetSmpSignatureInfoInvalidParticipant ()
+  {
+    final var aResult = m_aTools.getSmpSignatureInfoTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("get_smp_signature_info",
+                                                                       Map.of ("participantId",
+                                                                               "not-a-valid-pid",
+                                                                               "documentTypeId",
+                                                                               "busdox-docid-qns::dummy")));
+    assertNotNull (aResult);
+    assertTrue ("Expected isError=true for malformed participant ID", aResult.isError ().booleanValue ());
+  }
+
+  @Test
+  public void testGetSmpSignatureInfoUnregisteredParticipant ()
+  {
+    // Syntactically valid PID + valid-shaped doc type ID, but unregistered → tool should
+    // either return found=false or surface an error; either way it must not throw.
+    final var aResult = m_aTools.getSmpSignatureInfoTool ()
+                                .callHandler ()
+                                .apply (null,
+                                        new McpSchema.CallToolRequest ("get_smp_signature_info",
+                                                                       Map.of ("participantId",
+                                                                               "9999:does-not-exist-1234567890",
+                                                                               "documentTypeId",
+                                                                               "busdox-docid-qns::dummy")));
+    assertNotNull (aResult);
+    assertNotNull (aResult.content ());
+    assertFalse (aResult.content ().isEmpty ());
+  }
 }

@@ -16,27 +16,37 @@
  */
 package com.example.peppol.mcp.tools;
 
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import com.example.peppol.mcp.CPhossPeppolMcp;
 import com.example.peppol.mcp.model.DocumentTypeSupportResult;
 import com.example.peppol.mcp.model.EndpointInfo;
 import com.example.peppol.mcp.model.ParticipantInfo;
 import com.helger.base.enforce.ValueEnforcer;
+import com.helger.json.IJsonObject;
+import com.helger.json.JsonArray;
+import com.helger.json.JsonObject;
 import com.helger.peppol.security.PeppolTrustStores;
 import com.helger.peppol.servicedomain.EPeppolNetwork;
 import com.helger.peppol.smp.ESMPTransportProfile;
 import com.helger.peppolid.CIdentifier;
+import com.helger.peppolid.IDocumentTypeIdentifier;
 import com.helger.peppolid.IParticipantIdentifier;
+import com.helger.security.certificate.CertificateDecodeHelper;
 import com.helger.smpclient.peppol.SMPClientReadOnly;
 import com.helger.smpclient.url.PeppolNaptrURLProvider;
 import com.helger.smpclient.url.SMPDNSResolutionException;
+import com.helger.xsds.peppol.smp1.SignedServiceMetadataType;
+import com.helger.xsds.xmldsig.X509DataType;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.xml.bind.JAXBElement;
 
 /**
  * MCP tools wrapping the phax peppol-smp-client library. Each method returns a
@@ -278,6 +288,169 @@ public class PeppolSmpTools
       final String sDTID = (String) request.arguments ().get ("documentTypeId");
       final String sPRID = (String) request.arguments ().get ("processId");
       return Helper.executeWithErrorHandling ( () -> _getEndpointUrl (sPID, sDTID, sPRID).getAsJson ());
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Tool 4: List all document types a participant supports (SMP service group)
+  // -------------------------------------------------------------------------
+
+  @NonNull
+  private IJsonObject _getServiceGroups (@NonNull final String sPID) throws Exception
+  {
+    final var aPID = Helper.parseParticipantId (sPID, true);
+    final var aSmpClient = _createSmpClient (aPID);
+
+    final JsonObject aResult = new JsonObject ();
+    aResult.add ("participantId", aPID.getURIEncoded ());
+    aResult.add ("network", m_eNetwork.name ());
+    aResult.add ("smpUrl", aSmpClient.getSMPHostURI ());
+
+    final var aSG = aSmpClient.getServiceGroupOrNull (aPID);
+    if (aSG == null)
+    {
+      aResult.add ("found", false);
+      aResult.add ("message", "Participant has no Service Group on the SMP");
+      return aResult;
+    }
+    aResult.add ("found", true);
+
+    final var aDocTypes = SMPClientReadOnly.getAllDocumentTypes (aSG);
+    final JsonArray aDocTypeArr = new JsonArray ();
+    for (final IDocumentTypeIdentifier aDT : aDocTypes)
+      aDocTypeArr.add (aDT.getURIEncoded ());
+    aResult.add ("documentTypeCount", aDocTypes.size ());
+    aResult.add ("documentTypeIds", aDocTypeArr);
+    return aResult;
+  }
+
+  @NonNull
+  public SyncToolSpecification getSmpServiceGroupsTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("get_smp_service_groups")
+                                    .description ("""
+                                        Lists ALL document type identifiers that a Peppol Participant has registered \
+                                        on its SMP, by reading the Service Group resource. Use this to discover the \
+                                        full set of document types a company can receive — not just check support \
+                                        for one. Returns the SMP base URL and the list of registered document type \
+                                        identifiers in URI-encoded form.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("participantId",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Peppol participant identifier in format scheme:value, e.g. 0088:4012345678901")),
+                                                                            List.of ("participantId"),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final String sPID = (String) request.arguments ().get ("participantId");
+      return Helper.executeWithErrorHandling ( () -> _getServiceGroups (sPID));
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Tool 5: SMP response signing certificate info
+  // -------------------------------------------------------------------------
+
+  @NonNull
+  private IJsonObject _getSmpSignatureInfo (@NonNull final String sPID, @NonNull final String sDTID) throws Exception
+  {
+    final var aPID = Helper.parseParticipantId (sPID, true);
+    final var aSmpClient = _createSmpClient (aPID);
+    final var aDTID = Helper.parseDocTypeID (sDTID, true);
+
+    final JsonObject aResult = new JsonObject ();
+    aResult.add ("participantId", aPID.getURIEncoded ());
+    aResult.add ("documentTypeId", aDTID.getURIEncoded ());
+    aResult.add ("network", m_eNetwork.name ());
+
+    final SignedServiceMetadataType aSignedSM = aSmpClient.getServiceMetadataOrNull (aPID, aDTID, null);
+    if (aSignedSM == null)
+    {
+      aResult.add ("found", false);
+      aResult.add ("message", "No signed service metadata returned for this participant/document type");
+      return aResult;
+    }
+
+    final X509Certificate aCert = _extractSignerCertificate (aSignedSM);
+    if (aCert == null)
+    {
+      aResult.add ("found", false);
+      aResult.add ("message", "No X509Certificate element found in the SMP signature KeyInfo");
+      return aResult;
+    }
+
+    aResult.add ("found", true);
+    aResult.add ("subject", aCert.getSubjectX500Principal ().getName ());
+    aResult.add ("issuer", aCert.getIssuerX500Principal ().getName ());
+    aResult.add ("serialNumber", aCert.getSerialNumber ().toString ());
+    aResult.add ("notBefore", aCert.getNotBefore ().toInstant ().toString ());
+    aResult.add ("notAfter", aCert.getNotAfter ().toInstant ().toString ());
+    aResult.add ("sigAlgName", aCert.getSigAlgName ());
+    final var aNow = new java.util.Date ();
+    aResult.add ("currentlyValid", !aNow.before (aCert.getNotBefore ()) && !aNow.after (aCert.getNotAfter ()));
+    return aResult;
+  }
+
+  @Nullable
+  private static X509Certificate _extractSignerCertificate (@NonNull final SignedServiceMetadataType aSignedSM)
+  {
+    if (aSignedSM.getSignature () == null || aSignedSM.getSignature ().getKeyInfo () == null)
+      return null;
+
+    for (final Object aContent : aSignedSM.getSignature ().getKeyInfo ().getContent ())
+    {
+      if (aContent instanceof final JAXBElement <?> aElem && aElem.getValue () instanceof final X509DataType aX509Data)
+      {
+        for (final Object aX509Obj : aX509Data.getX509IssuerSerialOrX509SKIOrX509SubjectName ())
+          if (aX509Obj instanceof final JAXBElement <?> aX509Elem &&
+              "X509Certificate".equals (aX509Elem.getName ().getLocalPart ()))
+          {
+            final byte [] aCertBytes = (byte []) aX509Elem.getValue ();
+            return new CertificateDecodeHelper ().source (aCertBytes).pemEncoded (false).getDecodedOrNull ();
+          }
+      }
+    }
+    return null;
+  }
+
+  @NonNull
+  public SyncToolSpecification getSmpSignatureInfoTool ()
+  {
+    final var aTool = McpSchema.Tool.builder ()
+                                    .name ("get_smp_signature_info")
+                                    .description ("""
+                                        Retrieves information about the X.509 certificate that signed the SMP \
+                                        response for a given Participant and Document Type. Returns the certificate \
+                                        subject, issuer, validity period, serial number, and signature algorithm — \
+                                        useful for diagnosing SMP trust / signing issues. Note: this does NOT validate \
+                                        the certificate against the Peppol PKI; use 'check_certificate_chain' for that.""")
+                                    .inputSchema (new McpSchema.JsonSchema ("object",
+                                                                            Map.of ("participantId",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Peppol participant identifier in format scheme:value"),
+                                                                                    "documentTypeId",
+                                                                                    Map.of ("type",
+                                                                                            "string",
+                                                                                            "description",
+                                                                                            "Peppol document type identifier URN")),
+                                                                            List.of ("participantId", "documentTypeId"),
+                                                                            Boolean.FALSE,
+                                                                            null,
+                                                                            null))
+                                    .build ();
+
+    return new SyncToolSpecification (aTool, (exchange, request) -> {
+      final String sPID = (String) request.arguments ().get ("participantId");
+      final String sDTID = (String) request.arguments ().get ("documentTypeId");
+      return Helper.executeWithErrorHandling ( () -> _getSmpSignatureInfo (sPID, sDTID));
     });
   }
 }

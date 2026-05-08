@@ -12,6 +12,20 @@ capabilities as tools to AI models such as Claude.
 | `lookup_peppol_participant` | Check if a company is registered on the Peppol network |
 | `check_peppol_document_type_support` | Check if a participant supports a specific document type |
 | `get_peppol_endpoint_url` | Get the AS4 endpoint URL for sending to a participant |
+| `get_smp_service_groups` | List ALL document types a participant has registered on its SMP |
+| `get_smp_signature_info` | Inspect the X.509 certificate that signed the SMP response (subject, issuer, validity) |
+
+### DNS resolution tools (require network)
+
+| Tool | Description |
+|------|-------------|
+| `resolve_peppol_dns` | Resolve the Peppol U-NAPTR DNS chain for a participant; returns the queried DNS hostname and the resolved SMP base URL |
+
+### Certificate validation tools (require network for CRL/OCSP)
+
+| Tool | Description |
+|------|-------------|
+| `check_certificate_chain` | Validate a PEM-encoded X.509 certificate against the official Peppol AP or SMP trust stores (production, test, or all); checks issuer trust, validity, and revocation |
 
 ### Peppol Directory tools (require network, rate-limited to 2 queries/sec)
 
@@ -99,6 +113,9 @@ Restart Claude Desktop and ask questions like:
   - "Which participant ID schemes are available for Norway?"
   - "Is 0088 a valid Peppol participant identifier scheme?"
   - "Look up the process ID urn:fdc:peppol.eu:2017:poacc:billing:01:1.0 in the codelist"
+  - "List all document types registered for participant 0088:4012345678901"
+  - "Resolve the Peppol DNS for 0088:4012345678901 and show me the SMP URL"
+  - "Validate this AP certificate against the Peppol production trust store"
 
 ## Important: stdout vs stderr
 
@@ -130,6 +147,12 @@ Claude Desktop config for the test network:
 Other CLI options: `--help`, `--version`.
 
 # News and noteworthy
+
+v0.5.1 - 2026-05-08
+* Added SMP tool `get_smp_service_groups` to list all document types a participant has registered
+* Added SMP tool `get_smp_signature_info` to inspect the X.509 certificate that signed an SMP response
+* Added DNS tool `resolve_peppol_dns` to diagnose Peppol U-NAPTR DNS resolution
+* Added certificate tool `check_certificate_chain` to validate AP and SMP certificates against the official Peppol trust stores
 
 v0.5.0 - 2026-04-13
 * Initial release
