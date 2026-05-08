@@ -64,11 +64,12 @@
   </developers>
 
   <properties>
+    <jaxb.version>4.0.6</jaxb.version>
     <logback.version>1.5.32</logback.version>
     <mcp-sdk.version>1.1.2</mcp-sdk.version>
     <picocli.version>4.7.7</picocli.version>
 
-    <peppol-commons.version>12.4.1</peppol-commons.version>
+    <peppol-commons.version>12.5.0</peppol-commons.version>
   </properties>
 
   <dependencies>
@@ -97,7 +98,7 @@
     <dependency>
       <groupId>org.glassfish.jaxb</groupId>
       <artifactId>jaxb-runtime</artifactId>
-      <version>4.0.6</version>
+      <version>${jaxb.version}</version>
     </dependency>
 
     <dependency>
