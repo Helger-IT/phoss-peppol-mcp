@@ -1,5 +1,10 @@
 # phoss-peppol-mcp-server
 
+<!-- ph-badge-start -->
+[![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.helger.peppol.mcp/phoss-peppol-mcp-server/badge.svg)](https://maven-badges.sml.io/sonatype-central/com.helger.peppol.mcp/phoss-peppol-mcp-server/)
+[![javadoc](https://javadoc.io/badge2/com.helger.peppol.mcp/phoss-peppol-mcp-server/javadoc.svg)](https://javadoc.io/doc/com.helger.peppol.mcp/phoss-peppol-mcp-server)
+<!-- ph-badge-end -->
+
 A phoss Peppol MCP (Model Context Protocol) server that exposes Peppol Network 
 capabilities as tools to AI models such as Claude.
 
