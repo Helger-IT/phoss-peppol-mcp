@@ -113,9 +113,10 @@ public class PhossPeppolMcpServer implements Runnable
 
     // Build and start the MCP server
     final McpSyncServer server = McpServer.sync (new StdioServerTransportProvider (McpJsonDefaults.getMapper ()))
-                                          .serverInfo (new McpSchema.Implementation (CPhossPeppolMcp.APP_NAME,
-                                                                                     CPhossPeppolMcp.APP_TITLE,
-                                                                                     CPhossPeppolMcp.BUILD_VERSION))
+                                          .serverInfo (McpSchema.Implementation.builder (CPhossPeppolMcp.APP_NAME,
+                                                                                         CPhossPeppolMcp.BUILD_VERSION)
+                                                                               .title (CPhossPeppolMcp.APP_TITLE)
+                                                                               .build ())
                                           .capabilities (McpSchema.ServerCapabilities.builder ()
                                                                                      .tools (Boolean.TRUE)
                                                                                      .build ())

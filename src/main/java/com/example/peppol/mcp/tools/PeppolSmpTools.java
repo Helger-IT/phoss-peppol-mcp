@@ -115,8 +115,13 @@ public class PeppolSmpTools
   @NonNull
   public SyncToolSpecification lookupParticipantTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("lookup_peppol_participant")
+    final var aTool = McpSchema.Tool.builder ("lookup_peppol_participant",
+                                              Helper.inputSchema (Map.of ("participantId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol participant identifier in format scheme:value, e.g. 0088:4012345678901")),
+                                                                  List.of ("participantId")))
                                     .description ("""
                                         Looks up whether a company is registered in the Peppol Network and retrieves
                                         their registration details. Use this when a user asks whether a company can
@@ -126,20 +131,10 @@ public class PeppolSmpTools
                                         or '9915:AT123456789' for an Austrian UID.
                                         Common schemes: 0184 (DK CVR), 0192 (NO org), 9906 (IT VAT), 9915 (AT UID), 0060 (DUNS).
                                         """)
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("participantId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol participant identifier in format scheme:value, e.g. 0088:4012345678901")),
-                                                                            List.of ("participantId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sPID = (String) request.arguments ().get ("participantId");
+      final String sPID = (String) Helper.getArguments (request).get ("participantId");
       return Helper.executeWithErrorHandling ( () -> _lookupParticipant (sPID).getAsJson ());
     });
   }
@@ -179,8 +174,18 @@ public class PeppolSmpTools
   @NonNull
   public SyncToolSpecification checkDocumentTypeSupportTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("check_peppol_document_type_support")
+    final var aTool = McpSchema.Tool.builder ("check_peppol_document_type_support",
+                                              Helper.inputSchema (Map.of ("participantId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol participant identifier in format scheme:value"),
+                                                                          "documentTypeId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol document type identifier URN")),
+                                                                  List.of ("participantId", "documentTypeId")))
                                     .description ("""
                                         Checks whether a Peppol participant supports receiving a specific document type,
                                         such as an invoice, credit note, or order. Use this when a user asks whether
@@ -189,26 +194,11 @@ public class PeppolSmpTools
                                         'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1'
                                         for a Peppol BIS Billing 3.0 invoice.
                                         """)
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("participantId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol participant identifier in format scheme:value"),
-                                                                                    "documentTypeId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol document type identifier URN")),
-                                                                            List.of ("participantId", "documentTypeId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sPID = (String) request.arguments ().get ("participantId");
-      final String sDTID = (String) request.arguments ().get ("documentTypeId");
+      final String sPID = (String) Helper.getArguments (request).get ("participantId");
+      final String sDTID = (String) Helper.getArguments (request).get ("documentTypeId");
       return Helper.executeWithErrorHandling ( () -> _checkDocumentTypeSupport (sPID, sDTID).getAsJson ());
     });
   }
@@ -250,8 +240,25 @@ public class PeppolSmpTools
   @NonNull
   public SyncToolSpecification getEndpointUrlTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("get_peppol_endpoint_url")
+    final var aTool = McpSchema.Tool.builder ("get_peppol_endpoint_url",
+                                              Helper.inputSchema (Map.of ("participantId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol participant identifier in format scheme:value"),
+                                                                          "documentTypeId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol document type identifier URN"),
+                                                                          "processId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol process identifier URN, e.g. 'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0'")),
+                                                                  List.of ("participantId",
+                                                                           "documentTypeId",
+                                                                           "processId")))
                                     .description ("""
                                         Retrieves the AS4 endpoint URL for a Peppol Participant for a specific document type.
                                         Use this when you need the actual technical URL to send a document to a company,
@@ -259,34 +266,12 @@ public class PeppolSmpTools
                                         Returns the endpoint URL, transport profile, and certificate information.
                                         Note: this currently only checks the Peppol AS4 v2 transport profile.
                                         """)
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("participantId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol participant identifier in format scheme:value"),
-                                                                                    "documentTypeId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol document type identifier URN"),
-                                                                                    "processId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol process identifier URN, e.g. 'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0'")),
-                                                                            List.of ("participantId",
-                                                                                     "documentTypeId",
-                                                                                     "processId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sPID = (String) request.arguments ().get ("participantId");
-      final String sDTID = (String) request.arguments ().get ("documentTypeId");
-      final String sPRID = (String) request.arguments ().get ("processId");
+      final String sPID = (String) Helper.getArguments (request).get ("participantId");
+      final String sDTID = (String) Helper.getArguments (request).get ("documentTypeId");
+      final String sPRID = (String) Helper.getArguments (request).get ("processId");
       return Helper.executeWithErrorHandling ( () -> _getEndpointUrl (sPID, sDTID, sPRID).getAsJson ());
     });
   }
@@ -327,28 +312,23 @@ public class PeppolSmpTools
   @NonNull
   public SyncToolSpecification getSmpServiceGroupsTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("get_smp_service_groups")
+    final var aTool = McpSchema.Tool.builder ("get_smp_service_groups",
+                                              Helper.inputSchema (Map.of ("participantId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol participant identifier in format scheme:value, e.g. 0088:4012345678901")),
+                                                                  List.of ("participantId")))
                                     .description ("""
                                         Lists ALL document type identifiers that a Peppol Participant has registered \
                                         on its SMP, by reading the Service Group resource. Use this to discover the \
                                         full set of document types a company can receive — not just check support \
                                         for one. Returns the SMP base URL and the list of registered document type \
                                         identifiers in URI-encoded form.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("participantId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol participant identifier in format scheme:value, e.g. 0088:4012345678901")),
-                                                                            List.of ("participantId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sPID = (String) request.arguments ().get ("participantId");
+      final String sPID = (String) Helper.getArguments (request).get ("participantId");
       return Helper.executeWithErrorHandling ( () -> _getServiceGroups (sPID));
     });
   }
@@ -422,34 +402,29 @@ public class PeppolSmpTools
   @NonNull
   public SyncToolSpecification getSmpSignatureInfoTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("get_smp_signature_info")
+    final var aTool = McpSchema.Tool.builder ("get_smp_signature_info",
+                                              Helper.inputSchema (Map.of ("participantId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol participant identifier in format scheme:value"),
+                                                                          "documentTypeId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol document type identifier URN")),
+                                                                  List.of ("participantId", "documentTypeId")))
                                     .description ("""
                                         Retrieves information about the X.509 certificate that signed the SMP \
                                         response for a given Participant and Document Type. Returns the certificate \
                                         subject, issuer, validity period, serial number, and signature algorithm — \
                                         useful for diagnosing SMP trust / signing issues. Note: this does NOT validate \
                                         the certificate against the Peppol PKI; use 'check_certificate_chain' for that.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("participantId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol participant identifier in format scheme:value"),
-                                                                                    "documentTypeId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol document type identifier URN")),
-                                                                            List.of ("participantId", "documentTypeId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sPID = (String) request.arguments ().get ("participantId");
-      final String sDTID = (String) request.arguments ().get ("documentTypeId");
+      final String sPID = (String) Helper.getArguments (request).get ("participantId");
+      final String sDTID = (String) Helper.getArguments (request).get ("documentTypeId");
       return Helper.executeWithErrorHandling ( () -> _getSmpSignatureInfo (sPID, sDTID));
     });
   }

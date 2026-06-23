@@ -16,6 +16,10 @@
  */
 package com.example.peppol.mcp.tools;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -32,6 +36,7 @@ import com.helger.peppolid.IProcessIdentifier;
 import com.helger.peppolid.factory.PeppolIdentifierFactory;
 
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
 @Immutable
@@ -42,6 +47,45 @@ final class Helper
 
   private Helper ()
   {}
+
+  /**
+   * Build an MCP tool input schema as a plain Map, replacing the deprecated
+   * McpSchema.JsonSchema type. All Peppol tools use an object schema with a fixed
+   * set of properties, the listed required properties and no additional properties.
+   *
+   * @param aProperties
+   *        The JSON schema properties. May not be <code>null</code>.
+   * @param aRequired
+   *        The list of required property names. May not be <code>null</code> but may be empty.
+   * @return The assembled input schema Map. Never <code>null</code>.
+   */
+  @NonNull
+  static Map <String, Object> inputSchema (@NonNull final Map <String, Object> aProperties,
+                                           @NonNull final List <String> aRequired)
+  {
+    final Map <String, Object> ret = new LinkedHashMap <> ();
+    ret.put ("type", "object");
+    ret.put ("properties", aProperties);
+    ret.put ("required", aRequired);
+    ret.put ("additionalProperties", Boolean.FALSE);
+    return ret;
+  }
+
+  /**
+   * Get the arguments of a tool call request in a null-safe way. As of MCP SDK 2.0.0,
+   * CallToolRequest.arguments () returns <code>null</code> when the caller provides no arguments at
+   * all, so tools with only optional parameters must guard against it.
+   *
+   * @param aRequest
+   *        The tool call request. May not be <code>null</code>.
+   * @return The request arguments, or an empty Map if none were provided. Never <code>null</code>.
+   */
+  @NonNull
+  static Map <String, Object> getArguments (@NonNull final CallToolRequest aRequest)
+  {
+    final Map <String, Object> aArgs = aRequest.arguments ();
+    return aArgs != null ? aArgs : Map.of ();
+  }
 
   @NonNull
   static CallToolResult executeWithErrorHandling (@NonNull final IThrowingSupplier <IJson, Exception> aSupplier)

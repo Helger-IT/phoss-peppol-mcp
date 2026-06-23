@@ -82,8 +82,13 @@ public final class PeppolDnsTools
   @NonNull
   public SyncToolSpecification resolvePeppolDnsTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("resolve_peppol_dns")
+    final var aTool = McpSchema.Tool.builder ("resolve_peppol_dns",
+                                              Helper.inputSchema (Map.of ("participantId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol participant identifier in format scheme:value, e.g. 0088:4012345678901")),
+                                                                  List.of ("participantId")))
                                     .description ("""
                                         Resolves the Peppol U-NAPTR DNS chain for a Participant on the configured \
                                         network. Returns the DNS hostname queried (a SHA-256 hash of the participant \
@@ -92,20 +97,10 @@ public final class PeppolDnsTools
                                         looked up: missing DNS entries, wrong SML zone, or NAPTR misconfiguration. \
                                         The participantId must be in the format <scheme>:<value>, e.g. \
                                         '0088:4012345678901'.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("participantId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol participant identifier in format scheme:value, e.g. 0088:4012345678901")),
-                                                                            List.of ("participantId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sPID = (String) request.arguments ().get ("participantId");
+      final String sPID = (String) Helper.getArguments (request).get ("participantId");
       return Helper.executeWithErrorHandling ( () -> _resolveDns (sPID));
     });
   }

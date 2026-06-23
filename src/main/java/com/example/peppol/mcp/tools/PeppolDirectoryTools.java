@@ -231,8 +231,23 @@ public class PeppolDirectoryTools
   @NonNull
   public SyncToolSpecification searchParticipantsByNameTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("search_peppol_directory")
+    final var aTool = McpSchema.Tool.builder ("search_peppol_directory",
+                                              Helper.inputSchema (Map.of ("query",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Search query — matches across all fields: company name, participant ID, identifiers, etc."),
+                                                                          "countryCode",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional ISO 3166-1 alpha-2 country code to narrow the search, e.g. DE, AT, FR"),
+                                                                          "maxResults",
+                                                                          Map.of ("type",
+                                                                                  "integer",
+                                                                                  "description",
+                                                                                  "Maximum number of results to return (default 10, max 1000)")),
+                                                                  List.of ("query")))
                                     .description ("""
                                         Searches the Peppol Directory (the public registry of all Peppol participants) \
                                         using a generic query that matches across all fields: company name, participant \
@@ -242,30 +257,10 @@ public class PeppolDirectoryTools
                                         results to a specific country. Country codes follow ISO 3166-1 alpha-2, e.g. \
                                         DE, FR, AT, NO. Note: the Peppol Directory API is rate-limited to 2 queries \
                                         per second.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("query",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Search query — matches across all fields: company name, participant ID, identifiers, etc."),
-                                                                                    "countryCode",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional ISO 3166-1 alpha-2 country code to narrow the search, e.g. DE, AT, FR"),
-                                                                                    "maxResults",
-                                                                                    Map.of ("type",
-                                                                                            "integer",
-                                                                                            "description",
-                                                                                            "Maximum number of results to return (default 10, max 1000)")),
-                                                                            List.of ("query"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final var aArgs = request.arguments ();
+      final var aArgs = Helper.getArguments (request);
       final String sQuery = (String) aArgs.get ("query");
       final String sCountryCode = (String) aArgs.getOrDefault ("countryCode", null);
       final int nMaxResults = ((Number) aArgs.getOrDefault ("maxResults", Integer.valueOf (10))).intValue ();

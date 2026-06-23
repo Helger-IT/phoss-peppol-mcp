@@ -110,8 +110,25 @@ public final class PeppolCertificateTools
   @NonNull
   public SyncToolSpecification checkCertificateChainTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("check_certificate_chain")
+    final var aTool = McpSchema.Tool.builder ("check_certificate_chain",
+                                              Helper.inputSchema (Map.of ("certificate",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "PEM-encoded X.509 certificate (with or without BEGIN/END markers)"),
+                                                                          "certificateType",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol certificate role: 'AP' (Access Point) or 'SMP' (SMP signing)"),
+                                                                          "network",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol network: 'production', 'test' (alias 'pilot'), or 'all' to accept either")),
+                                                                  List.of ("certificate",
+                                                                           "certificateType",
+                                                                           "network")))
                                     .description ("""
                                         Validates an X.509 certificate against the official Peppol trust stores. \
                                         Checks issuer trust, validity period, and revocation status (CRL/OCSP). \
@@ -121,34 +138,12 @@ public final class PeppolCertificateTools
                                         Use certificateType='AP' for Access Point certificates and 'SMP' for SMP \
                                         signing certificates. Use network='production', 'test', or 'all' to choose \
                                         which Peppol root CAs to check against.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("certificate",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "PEM-encoded X.509 certificate (with or without BEGIN/END markers)"),
-                                                                                    "certificateType",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol certificate role: 'AP' (Access Point) or 'SMP' (SMP signing)"),
-                                                                                    "network",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol network: 'production', 'test' (alias 'pilot'), or 'all' to accept either")),
-                                                                            List.of ("certificate",
-                                                                                     "certificateType",
-                                                                                     "network"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sCert = (String) request.arguments ().get ("certificate");
-      final String sCertType = (String) request.arguments ().get ("certificateType");
-      final String sNetwork = (String) request.arguments ().get ("network");
+      final String sCert = (String) Helper.getArguments (request).get ("certificate");
+      final String sCertType = (String) Helper.getArguments (request).get ("certificateType");
+      final String sNetwork = (String) Helper.getArguments (request).get ("network");
       return Helper.executeWithErrorHandling (() -> _checkCertificateChain (sCert, sCertType, sNetwork));
     });
   }

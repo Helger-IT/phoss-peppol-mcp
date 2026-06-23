@@ -155,8 +155,13 @@ public final class PeppolCodelistTools
   @NonNull
   public SyncToolSpecification checkParticipantIdSchemeInCodelistTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("check_participant_id_scheme_in_codelist")
+    final var aTool = McpSchema.Tool.builder ("check_participant_id_scheme_in_codelist",
+                                              Helper.inputSchema (Map.of ("participantId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Full Participant identifier (e.g. '0088:4012345678901') or just the ISO 6523 scheme code (e.g. '0088')")),
+                                                                  List.of ("participantId")))
                                     .description ("""
                                         Checks whether the identifier scheme (ISO 6523 code) used in a Peppol \
                                         Participant identifier is present in the official Peppol Participant \
@@ -164,20 +169,10 @@ public final class PeppolCodelistTools
                                         '0192' (Norwegian org number) is a recognized Peppol scheme. \
                                         You can pass either a full Participant identifier like '0088:4012345678901' \
                                         or just the ISO 6523 scheme code like '0088'.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("participantId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Full Participant identifier (e.g. '0088:4012345678901') or just the ISO 6523 scheme code (e.g. '0088')")),
-                                                                            List.of ("participantId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sPID = (String) request.arguments ().get ("participantId");
+      final String sPID = (String) Helper.getArguments (request).get ("participantId");
       return Helper.executeWithErrorHandling (() -> _checkParticipantIdSchemeInCodelist (sPID));
     });
   }
@@ -223,8 +218,13 @@ public final class PeppolCodelistTools
   @NonNull
   public SyncToolSpecification checkDocumentTypeIdInCodelistTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("check_document_type_id_in_codelist")
+    final var aTool = McpSchema.Tool.builder ("check_document_type_id_in_codelist",
+                                              Helper.inputSchema (Map.of ("documentTypeId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol Document Type identifier value to look up in the codelist")),
+                                                                  List.of ("documentTypeId")))
                                     .description ("""
                                         Checks whether a Peppol Document Type identifier is present in the \
                                         official Peppol Document Type codelist. Returns detailed information \
@@ -232,20 +232,10 @@ public final class PeppolCodelistTools
                                         domain community, and associated Process IDs if found. \
                                         The value should be the Document Type identifier value, e.g. \
                                         'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##...'.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("documentTypeId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol Document Type identifier value to look up in the codelist")),
-                                                                            List.of ("documentTypeId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sDTID = (String) request.arguments ().get ("documentTypeId");
+      final String sDTID = (String) Helper.getArguments (request).get ("documentTypeId");
       return Helper.executeWithErrorHandling (() -> _checkDocumentTypeIdInCodelist (sDTID));
     });
   }
@@ -278,28 +268,23 @@ public final class PeppolCodelistTools
   @NonNull
   public SyncToolSpecification checkProcessIdInCodelistTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("check_process_id_in_codelist")
+    final var aTool = McpSchema.Tool.builder ("check_process_id_in_codelist",
+                                              Helper.inputSchema (Map.of ("processId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Peppol Process identifier value to look up in the codelist")),
+                                                                  List.of ("processId")))
                                     .description ("""
                                         Checks whether a Peppol Process identifier is present in the official \
                                         Peppol Process identifier codelist. Returns the state \
                                         (active/deprecated/removed) if found. \
                                         The value should be a Process identifier string, e.g. \
                                         'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0'.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("processId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Peppol Process identifier value to look up in the codelist")),
-                                                                            List.of ("processId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sPRID = (String) request.arguments ().get ("processId");
+      final String sPRID = (String) Helper.getArguments (request).get ("processId");
       return Helper.executeWithErrorHandling (() -> _checkProcessIdInCodelist (sPRID));
     });
   }
@@ -340,27 +325,22 @@ public final class PeppolCodelistTools
   @NonNull
   public SyncToolSpecification checkSPISUseCaseIdInCodelistTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("check_spis_use_case_id_in_codelist")
+    final var aTool = McpSchema.Tool.builder ("check_spis_use_case_id_in_codelist",
+                                              Helper.inputSchema (Map.of ("useCaseId",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "SPIS Use Case identifier to look up, e.g. 'MLS'")),
+                                                                  List.of ("useCaseId")))
                                     .description ("""
                                         Checks whether a SPIS (Service Provider Information Service) Use Case \
                                         identifier is present in the official Peppol SPIS Use Case codelist. \
                                         Returns the state (active/deprecated/removed) if found. \
                                         Example: 'MLS' for Message Level Status.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("useCaseId",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "SPIS Use Case identifier to look up, e.g. 'MLS'")),
-                                                                            List.of ("useCaseId"),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final String sUseCaseID = (String) request.arguments ().get ("useCaseId");
+      final String sUseCaseID = (String) Helper.getArguments (request).get ("useCaseId");
       return Helper.executeWithErrorHandling (() -> _checkSPISUseCaseIdInCodelist (sUseCaseID));
     });
   }
@@ -382,19 +362,14 @@ public final class PeppolCodelistTools
   @NonNull
   public SyncToolSpecification getCodelistVersionTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("get_peppol_codelist_version")
+    final var aTool = McpSchema.Tool.builder ("get_peppol_codelist_version",
+                                              Helper.inputSchema (Map.of (),
+                                                                  List.of ()))
                                     .description ("""
                                         Returns the version of the Peppol codelists currently in use. \
                                         This includes the version of the Participant identifier scheme, \
                                         Document Type, Process identifier, and SPIS Use Case codelists. \
                                         No input parameters required.""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of (),
-                                                                            List.of (),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool,
@@ -446,50 +421,45 @@ public final class PeppolCodelistTools
   @NonNull
   public SyncToolSpecification listParticipantIdSchemesTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("list_participant_id_schemes")
+    final var aTool = McpSchema.Tool.builder ("list_participant_id_schemes",
+                                              Helper.inputSchema (Map.of ("state",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
+                                                                          "countryCode",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional ISO 3166-1 alpha-2 country code to filter by, e.g. 'DE', 'AT', 'NO'"),
+                                                                          "query",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional case-insensitive text search across scheme ID, name, agency, ISO 6523 code, and country code"),
+                                                                          "offset",
+                                                                          Map.of ("type",
+                                                                                  "integer",
+                                                                                  "description",
+                                                                                  "Number of matching entries to skip (default 0)"),
+                                                                          "limit",
+                                                                          Map.of ("type",
+                                                                                  "integer",
+                                                                                  "description",
+                                                                                  "Maximum number of entries to return (default " +
+                                                                                                 DEFAULT_LIMIT +
+                                                                                                 ")")),
+                                                                  List.of ()))
                                     .description ("""
                                         Lists all Participant identifier schemes (ISO 6523 codes) from the \
                                         official Peppol codelist. Can be filtered by state, country code, \
                                         and/or a text query that matches against scheme ID, name, agency, \
                                         ISO 6523 code, or country code. Results are paginated (default limit: \
                                         50).""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("state",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
-                                                                                    "countryCode",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional ISO 3166-1 alpha-2 country code to filter by, e.g. 'DE', 'AT', 'NO'"),
-                                                                                    "query",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional case-insensitive text search across scheme ID, name, agency, ISO 6523 code, and country code"),
-                                                                                    "offset",
-                                                                                    Map.of ("type",
-                                                                                            "integer",
-                                                                                            "description",
-                                                                                            "Number of matching entries to skip (default 0)"),
-                                                                                    "limit",
-                                                                                    Map.of ("type",
-                                                                                            "integer",
-                                                                                            "description",
-                                                                                            "Maximum number of entries to return (default " +
-                                                                                                           DEFAULT_LIMIT +
-                                                                                                           ")")),
-                                                                            List.of (),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final var aArgs = request.arguments ();
+      final var aArgs = Helper.getArguments (request);
       final String sState = (String) aArgs.get ("state");
       final String sCountryCode = (String) aArgs.get ("countryCode");
       final String sQuery = (String) aArgs.get ("query");
@@ -541,8 +511,35 @@ public final class PeppolCodelistTools
   @NonNull
   public SyncToolSpecification listDocumentTypeIdsTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("list_document_type_ids")
+    final var aTool = McpSchema.Tool.builder ("list_document_type_ids",
+                                              Helper.inputSchema (Map.of ("state",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
+                                                                          "query",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional case-insensitive text search across the common name and identifier value, e.g. 'credit note', 'UBL.BE', 'XRechnung'"),
+                                                                          "domainCommunity",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional filter by domain community, e.g. 'POAC', 'PRAC', 'Logistics'"),
+                                                                          "offset",
+                                                                          Map.of ("type",
+                                                                                  "integer",
+                                                                                  "description",
+                                                                                  "Number of matching entries to skip (default 0)"),
+                                                                          "limit",
+                                                                          Map.of ("type",
+                                                                                  "integer",
+                                                                                  "description",
+                                                                                  "Maximum number of entries to return (default " +
+                                                                                                 DEFAULT_LIMIT +
+                                                                                                 ")")),
+                                                                  List.of ()))
                                     .description ("""
                                         Lists Document Type identifiers from the official Peppol codelist. \
                                         Can be filtered by state, domain community, and/or a text query that \
@@ -550,42 +547,10 @@ public final class PeppolCodelistTools
                                         discover which document types (invoices, credit notes, orders, etc.) \
                                         are defined in the Peppol network. Results are paginated (default limit: \
                                         50).""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("state",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
-                                                                                    "query",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional case-insensitive text search across the common name and identifier value, e.g. 'credit note', 'UBL.BE', 'XRechnung'"),
-                                                                                    "domainCommunity",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional filter by domain community, e.g. 'POAC', 'PRAC', 'Logistics'"),
-                                                                                    "offset",
-                                                                                    Map.of ("type",
-                                                                                            "integer",
-                                                                                            "description",
-                                                                                            "Number of matching entries to skip (default 0)"),
-                                                                                    "limit",
-                                                                                    Map.of ("type",
-                                                                                            "integer",
-                                                                                            "description",
-                                                                                            "Maximum number of entries to return (default " +
-                                                                                                           DEFAULT_LIMIT +
-                                                                                                           ")")),
-                                                                            List.of (),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final var aArgs = request.arguments ();
+      final var aArgs = Helper.getArguments (request);
       final String sState = (String) aArgs.get ("state");
       final String sQuery = (String) aArgs.get ("query");
       final String sDomainCommunity = (String) aArgs.get ("domainCommunity");
@@ -631,8 +596,30 @@ public final class PeppolCodelistTools
   @NonNull
   public SyncToolSpecification listProcessIdsTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("list_process_ids")
+    final var aTool = McpSchema.Tool.builder ("list_process_ids",
+                                              Helper.inputSchema (Map.of ("state",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
+                                                                          "query",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional case-insensitive text search on the process identifier value, e.g. 'billing', 'ordering'"),
+                                                                          "offset",
+                                                                          Map.of ("type",
+                                                                                  "integer",
+                                                                                  "description",
+                                                                                  "Number of matching entries to skip (default 0)"),
+                                                                          "limit",
+                                                                          Map.of ("type",
+                                                                                  "integer",
+                                                                                  "description",
+                                                                                  "Maximum number of entries to return (default " +
+                                                                                                 DEFAULT_LIMIT +
+                                                                                                 ")")),
+                                                                  List.of ()))
                                     .description ("""
                                         Lists Process identifiers from the official Peppol codelist. \
                                         Can be filtered by state and/or a text query that matches against \
@@ -640,37 +627,10 @@ public final class PeppolCodelistTools
                                         processes (billing, ordering, despatch advice, etc.) are defined \
                                         in the Peppol network. Results are paginated (default limit: \
                                         50).""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("state",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
-                                                                                    "query",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional case-insensitive text search on the process identifier value, e.g. 'billing', 'ordering'"),
-                                                                                    "offset",
-                                                                                    Map.of ("type",
-                                                                                            "integer",
-                                                                                            "description",
-                                                                                            "Number of matching entries to skip (default 0)"),
-                                                                                    "limit",
-                                                                                    Map.of ("type",
-                                                                                            "integer",
-                                                                                            "description",
-                                                                                            "Maximum number of entries to return (default " +
-                                                                                                           DEFAULT_LIMIT +
-                                                                                                           ")")),
-                                                                            List.of (),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final var aArgs = request.arguments ();
+      final var aArgs = Helper.getArguments (request);
       final String sState = (String) aArgs.get ("state");
       final String sQuery = (String) aArgs.get ("query");
       final int nOffset = _parseOffset (aArgs.get ("offset"));
@@ -714,44 +674,39 @@ public final class PeppolCodelistTools
   @NonNull
   public SyncToolSpecification listSPISUseCaseIdsTool ()
   {
-    final var aTool = McpSchema.Tool.builder ()
-                                    .name ("list_spis_use_case_ids")
+    final var aTool = McpSchema.Tool.builder ("list_spis_use_case_ids",
+                                              Helper.inputSchema (Map.of ("state",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
+                                                                          "query",
+                                                                          Map.of ("type",
+                                                                                  "string",
+                                                                                  "description",
+                                                                                  "Optional case-insensitive text search on the use case ID"),
+                                                                          "offset",
+                                                                          Map.of ("type",
+                                                                                  "integer",
+                                                                                  "description",
+                                                                                  "Number of matching entries to skip (default 0)"),
+                                                                          "limit",
+                                                                          Map.of ("type",
+                                                                                  "integer",
+                                                                                  "description",
+                                                                                  "Maximum number of entries to return (default " +
+                                                                                                 DEFAULT_LIMIT +
+                                                                                                 ")")),
+                                                                  List.of ()))
                                     .description ("""
                                         Lists SPIS (Service Provider Information Service) Use Case \
                                         identifiers from the official Peppol codelist. Can be filtered by \
                                         state and/or a text query. Results are paginated (default limit: \
                                         50).""")
-                                    .inputSchema (new McpSchema.JsonSchema ("object",
-                                                                            Map.of ("state",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional filter by state: 'act' (active), 'dep' (deprecated), 'rem' (removed). If omitted, all states are included."),
-                                                                                    "query",
-                                                                                    Map.of ("type",
-                                                                                            "string",
-                                                                                            "description",
-                                                                                            "Optional case-insensitive text search on the use case ID"),
-                                                                                    "offset",
-                                                                                    Map.of ("type",
-                                                                                            "integer",
-                                                                                            "description",
-                                                                                            "Number of matching entries to skip (default 0)"),
-                                                                                    "limit",
-                                                                                    Map.of ("type",
-                                                                                            "integer",
-                                                                                            "description",
-                                                                                            "Maximum number of entries to return (default " +
-                                                                                                           DEFAULT_LIMIT +
-                                                                                                           ")")),
-                                                                            List.of (),
-                                                                            Boolean.FALSE,
-                                                                            null,
-                                                                            null))
                                     .build ();
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
-      final var aArgs = request.arguments ();
+      final var aArgs = Helper.getArguments (request);
       final String sState = (String) aArgs.get ("state");
       final String sQuery = (String) aArgs.get ("query");
       final int nOffset = _parseOffset (aArgs.get ("offset"));
