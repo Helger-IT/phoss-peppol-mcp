@@ -178,7 +178,7 @@ public final class PeppolCodelistTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPID = (String) request.arguments ().get ("participantId");
-      return Helper.executeWithErrorHandling ( () -> _checkParticipantIdSchemeInCodelist (sPID));
+      return Helper.executeWithErrorHandling (() -> _checkParticipantIdSchemeInCodelist (sPID));
     });
   }
 
@@ -246,7 +246,7 @@ public final class PeppolCodelistTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sDTID = (String) request.arguments ().get ("documentTypeId");
-      return Helper.executeWithErrorHandling ( () -> _checkDocumentTypeIdInCodelist (sDTID));
+      return Helper.executeWithErrorHandling (() -> _checkDocumentTypeIdInCodelist (sDTID));
     });
   }
 
@@ -300,7 +300,7 @@ public final class PeppolCodelistTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPRID = (String) request.arguments ().get ("processId");
-      return Helper.executeWithErrorHandling ( () -> _checkProcessIdInCodelist (sPRID));
+      return Helper.executeWithErrorHandling (() -> _checkProcessIdInCodelist (sPRID));
     });
   }
 
@@ -361,7 +361,7 @@ public final class PeppolCodelistTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sUseCaseID = (String) request.arguments ().get ("useCaseId");
-      return Helper.executeWithErrorHandling ( () -> _checkSPISUseCaseIdInCodelist (sUseCaseID));
+      return Helper.executeWithErrorHandling (() -> _checkSPISUseCaseIdInCodelist (sUseCaseID));
     });
   }
 
@@ -418,9 +418,7 @@ public final class PeppolCodelistTools
 
     for (final IPeppolParticipantIdentifierScheme aScheme : PeppolParticipantIdentifierSchemeManager.getAllSchemes ())
     {
-      if (eStateFilter != null && aScheme.getState () != eStateFilter)
-        continue;
-      if (StringHelper.isNotEmpty (sCountryCode) && !sCountryCode.equalsIgnoreCase (aScheme.getCountryCode ()))
+      if ((eStateFilter != null && aScheme.getState () != eStateFilter) || (StringHelper.isNotEmpty (sCountryCode) && !sCountryCode.equalsIgnoreCase (aScheme.getCountryCode ())))
         continue;
       if (!_matchesQuery (sQuery,
                           aScheme.getISO6523Code (),
@@ -497,11 +495,11 @@ public final class PeppolCodelistTools
       final String sQuery = (String) aArgs.get ("query");
       final int nOffset = _parseOffset (aArgs.get ("offset"));
       final int nLimit = _parseLimit (aArgs.get ("limit"));
-      return Helper.executeWithErrorHandling ( () -> _listParticipantIdSchemes (sState,
-                                                                                sCountryCode,
-                                                                                sQuery,
-                                                                                nOffset,
-                                                                                nLimit));
+      return Helper.executeWithErrorHandling (() -> _listParticipantIdSchemes (sState,
+                                                                               sCountryCode,
+                                                                               sQuery,
+                                                                               nOffset,
+                                                                               nLimit));
     });
   }
 
@@ -521,9 +519,7 @@ public final class PeppolCodelistTools
 
     for (final IPeppolPredefinedDocumentTypeIdentifier aDT : PredefinedDocumentTypeIdentifierManager.getAllDocumentTypeIdentifiers ())
     {
-      if (eStateFilter != null && aDT.getState () != eStateFilter)
-        continue;
-      if (StringHelper.isNotEmpty (sDomainCommunity) && !sDomainCommunity.equalsIgnoreCase (aDT.getDomainCommunity ()))
+      if ((eStateFilter != null && aDT.getState () != eStateFilter) || (StringHelper.isNotEmpty (sDomainCommunity) && !sDomainCommunity.equalsIgnoreCase (aDT.getDomainCommunity ())))
         continue;
       if (!_matchesQuery (sQuery, aDT.getCommonName (), aDT.getValue ()))
         continue;
@@ -595,11 +591,11 @@ public final class PeppolCodelistTools
       final String sDomainCommunity = (String) aArgs.get ("domainCommunity");
       final int nOffset = _parseOffset (aArgs.get ("offset"));
       final int nLimit = _parseLimit (aArgs.get ("limit"));
-      return Helper.executeWithErrorHandling ( () -> _listDocumentTypeIds (sState,
-                                                                           sQuery,
-                                                                           sDomainCommunity,
-                                                                           nOffset,
-                                                                           nLimit));
+      return Helper.executeWithErrorHandling (() -> _listDocumentTypeIds (sState,
+                                                                          sQuery,
+                                                                          sDomainCommunity,
+                                                                          nOffset,
+                                                                          nLimit));
     });
   }
 
@@ -618,9 +614,7 @@ public final class PeppolCodelistTools
 
     for (final IPeppolPredefinedProcessIdentifier aProc : PredefinedProcessIdentifierManager.getAllProcessIdentifiers ())
     {
-      if (eStateFilter != null && aProc.getState () != eStateFilter)
-        continue;
-      if (!_matchesQuery (sQuery, aProc.getValue ()))
+      if ((eStateFilter != null && aProc.getState () != eStateFilter) || !_matchesQuery (sQuery, aProc.getValue ()))
         continue;
 
       final JsonObject aEntry = new JsonObject ();
@@ -681,7 +675,7 @@ public final class PeppolCodelistTools
       final String sQuery = (String) aArgs.get ("query");
       final int nOffset = _parseOffset (aArgs.get ("offset"));
       final int nLimit = _parseLimit (aArgs.get ("limit"));
-      return Helper.executeWithErrorHandling ( () -> _listProcessIds (sState, sQuery, nOffset, nLimit));
+      return Helper.executeWithErrorHandling (() -> _listProcessIds (sState, sQuery, nOffset, nLimit));
     });
   }
 
@@ -700,9 +694,7 @@ public final class PeppolCodelistTools
 
     for (final var aUseCase : EPredefinedSPISUseCaseIdentifier.values ())
     {
-      if (eStateFilter != null && aUseCase.getState () != eStateFilter)
-        continue;
-      if (!_matchesQuery (sQuery, aUseCase.getUseCaseID ()))
+      if ((eStateFilter != null && aUseCase.getState () != eStateFilter) || !_matchesQuery (sQuery, aUseCase.getUseCaseID ()))
         continue;
 
       final JsonObject aEntry = new JsonObject ();
@@ -764,7 +756,7 @@ public final class PeppolCodelistTools
       final String sQuery = (String) aArgs.get ("query");
       final int nOffset = _parseOffset (aArgs.get ("offset"));
       final int nLimit = _parseLimit (aArgs.get ("limit"));
-      return Helper.executeWithErrorHandling ( () -> _listSPISUseCaseIds (sState, sQuery, nOffset, nLimit));
+      return Helper.executeWithErrorHandling (() -> _listSPISUseCaseIds (sState, sQuery, nOffset, nLimit));
     });
   }
 }

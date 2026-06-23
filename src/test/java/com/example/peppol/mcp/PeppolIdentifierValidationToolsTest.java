@@ -54,8 +54,10 @@ public final class PeppolIdentifierValidationToolsTest
     final var aSpec = m_aTools.validateParticipantIdSyntaxTool ();
     final var aResult = aSpec.callHandler ()
                              .apply (null,
-                                     new McpSchema.CallToolRequest ("validate_participant_id_syntax",
-                                                                    Map.of ("participantId", "0088:4012345678901")));
+                                     McpSchema.CallToolRequest.builder ("validate_participant_id_syntax")
+                                                              .arguments (Map.of ("participantId",
+                                                                                  "0088:4012345678901"))
+                                                              .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
@@ -68,8 +70,9 @@ public final class PeppolIdentifierValidationToolsTest
     final var aSpec = m_aTools.validateParticipantIdSyntaxTool ();
     final var aResult = aSpec.callHandler ()
                              .apply (null,
-                                     new McpSchema.CallToolRequest ("validate_participant_id_syntax",
-                                                                    Map.of ("participantId", "not-a-valid-id")));
+                                     McpSchema.CallToolRequest.builder ("validate_participant_id_syntax")
+                                                              .arguments (Map.of ("participantId", "not-a-valid-id"))
+                                                              .build ());
     assertNotNull (aResult);
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
@@ -82,8 +85,9 @@ public final class PeppolIdentifierValidationToolsTest
     final var aSpec = m_aTools.validateParticipantIdSyntaxTool ();
     final var aResult = aSpec.callHandler ()
                              .apply (null,
-                                     new McpSchema.CallToolRequest ("validate_participant_id_syntax",
-                                                                    Map.of ("participantId", "0192:123456789")));
+                                     McpSchema.CallToolRequest.builder ("validate_participant_id_syntax")
+                                                              .arguments (Map.of ("participantId", "0192:123456789"))
+                                                              .build ());
     assertNotNull (aResult);
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();
@@ -96,9 +100,10 @@ public final class PeppolIdentifierValidationToolsTest
     final var aSpec = m_aTools.validateParticipantIdSyntaxTool ();
     final var aResult = aSpec.callHandler ()
                              .apply (null,
-                                     new McpSchema.CallToolRequest ("validate_participant_id_syntax",
-                                                                    Map.of ("participantId",
-                                                                            "iso6523-actorid-upis::0192:123456789")));
+                                     McpSchema.CallToolRequest.builder ("validate_participant_id_syntax")
+                                                              .arguments (Map.of ("participantId",
+                                                                                  "iso6523-actorid-upis::0192:123456789"))
+                                                              .build ());
     assertNotNull (aResult);
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = ((McpSchema.TextContent) aResult.content ().get (0)).text ();

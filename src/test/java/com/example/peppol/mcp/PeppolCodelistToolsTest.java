@@ -48,8 +48,9 @@ public final class PeppolCodelistToolsTest
     return m_aTools.checkParticipantIdSchemeInCodelistTool ()
                    .callHandler ()
                    .apply (null,
-                           new McpSchema.CallToolRequest ("check_participant_id_scheme_in_codelist",
-                                                          Map.of ("participantId", sInput)));
+                           McpSchema.CallToolRequest.builder ("check_participant_id_scheme_in_codelist")
+                                                    .arguments (Map.of ("participantId", sInput))
+                                                    .build ());
   }
 
   @NonNull
@@ -58,8 +59,9 @@ public final class PeppolCodelistToolsTest
     return m_aTools.checkDocumentTypeIdInCodelistTool ()
                    .callHandler ()
                    .apply (null,
-                           new McpSchema.CallToolRequest ("check_document_type_id_in_codelist",
-                                                          Map.of ("documentTypeId", sInput)));
+                           McpSchema.CallToolRequest.builder ("check_document_type_id_in_codelist")
+                                                    .arguments (Map.of ("documentTypeId", sInput))
+                                                    .build ());
   }
 
   @NonNull
@@ -68,8 +70,9 @@ public final class PeppolCodelistToolsTest
     return m_aTools.checkProcessIdInCodelistTool ()
                    .callHandler ()
                    .apply (null,
-                           new McpSchema.CallToolRequest ("check_process_id_in_codelist",
-                                                          Map.of ("processId", sInput)));
+                           McpSchema.CallToolRequest.builder ("check_process_id_in_codelist")
+                                                    .arguments (Map.of ("processId", sInput))
+                                                    .build ());
   }
 
   @NonNull
@@ -78,8 +81,9 @@ public final class PeppolCodelistToolsTest
     return m_aTools.checkSPISUseCaseIdInCodelistTool ()
                    .callHandler ()
                    .apply (null,
-                           new McpSchema.CallToolRequest ("check_spis_use_case_id_in_codelist",
-                                                          Map.of ("useCaseId", sInput)));
+                           McpSchema.CallToolRequest.builder ("check_spis_use_case_id_in_codelist")
+                                                    .arguments (Map.of ("useCaseId", sInput))
+                                                    .build ());
   }
 
   @NonNull
@@ -111,7 +115,8 @@ public final class PeppolCodelistToolsTest
   {
     final var aResult = m_aTools.getCodelistVersionTool ()
                                 .callHandler ()
-                                .apply (null, new McpSchema.CallToolRequest ("get_peppol_codelist_version", Map.of ()));
+                                .apply (null,
+                                        McpSchema.CallToolRequest.builder ("get_peppol_codelist_version").build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -304,7 +309,8 @@ public final class PeppolCodelistToolsTest
   {
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
-                                .apply (null, new McpSchema.CallToolRequest ("list_participant_id_schemes", Map.of ()));
+                                .apply (null,
+                                        McpSchema.CallToolRequest.builder ("list_participant_id_schemes").build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -320,8 +326,9 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_participant_id_schemes",
-                                                                       Map.of ("state", "act")));
+                                        McpSchema.CallToolRequest.builder ("list_participant_id_schemes")
+                                                                 .arguments (Map.of ("state", "act"))
+                                                                 .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -336,8 +343,9 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_participant_id_schemes",
-                                                                       Map.of ("countryCode", "NO")));
+                                        McpSchema.CallToolRequest.builder ("list_participant_id_schemes")
+                                                                 .arguments (Map.of ("countryCode", "NO"))
+                                                                 .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -351,8 +359,9 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_participant_id_schemes",
-                                                                       Map.of ("query", "GLN")));
+                                        McpSchema.CallToolRequest.builder ("list_participant_id_schemes")
+                                                                 .arguments (Map.of ("query", "GLN"))
+                                                                 .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -366,11 +375,12 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_participant_id_schemes",
-                                                                       _args ("offset",
-                                                                              Integer.valueOf (2),
-                                                                              "limit",
-                                                                              Integer.valueOf (3))));
+                                        McpSchema.CallToolRequest.builder ("list_participant_id_schemes")
+                                                                 .arguments (_args ("offset",
+                                                                                    Integer.valueOf (2),
+                                                                                    "limit",
+                                                                                    Integer.valueOf (3)))
+                                                                 .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -388,7 +398,7 @@ public final class PeppolCodelistToolsTest
   {
     final var aResult = m_aTools.listDocumentTypeIdsTool ()
                                 .callHandler ()
-                                .apply (null, new McpSchema.CallToolRequest ("list_document_type_ids", Map.of ()));
+                                .apply (null, McpSchema.CallToolRequest.builder ("list_document_type_ids").build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -402,8 +412,9 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listDocumentTypeIdsTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_document_type_ids",
-                                                                       Map.of ("state", "act")));
+                                        McpSchema.CallToolRequest.builder ("list_document_type_ids")
+                                                                 .arguments (Map.of ("state", "act"))
+                                                                 .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -418,8 +429,9 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listDocumentTypeIdsTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_document_type_ids",
-                                                                       Map.of ("query", "UBL.BE")));
+                                        McpSchema.CallToolRequest.builder ("list_document_type_ids")
+                                                                 .arguments (Map.of ("query", "UBL.BE"))
+                                                                 .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -433,8 +445,9 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listDocumentTypeIdsTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_document_type_ids",
-                                                                       Map.of ("domainCommunity", "PRAC")));
+                                        McpSchema.CallToolRequest.builder ("list_document_type_ids")
+                                                                 .arguments (Map.of ("domainCommunity", "PRAC"))
+                                                                 .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -452,7 +465,7 @@ public final class PeppolCodelistToolsTest
   {
     final var aResult = m_aTools.listProcessIdsTool ()
                                 .callHandler ()
-                                .apply (null, new McpSchema.CallToolRequest ("list_process_ids", Map.of ()));
+                                .apply (null, McpSchema.CallToolRequest.builder ("list_process_ids").build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -466,7 +479,9 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listProcessIdsTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_process_ids", Map.of ("state", "act")));
+                                        McpSchema.CallToolRequest.builder ("list_process_ids")
+                                                                 .arguments (Map.of ("state", "act"))
+                                                                 .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -481,8 +496,9 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listProcessIdsTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_process_ids",
-                                                                       Map.of ("query", "billing")));
+                                        McpSchema.CallToolRequest.builder ("list_process_ids")
+                                                                 .arguments (Map.of ("query", "billing"))
+                                                                 .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -499,7 +515,7 @@ public final class PeppolCodelistToolsTest
   {
     final var aResult = m_aTools.listSPISUseCaseIdsTool ()
                                 .callHandler ()
-                                .apply (null, new McpSchema.CallToolRequest ("list_spis_use_case_ids", Map.of ()));
+                                .apply (null, McpSchema.CallToolRequest.builder ("list_spis_use_case_ids").build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -514,8 +530,9 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listSPISUseCaseIdsTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_spis_use_case_ids",
-                                                                       Map.of ("state", "act")));
+                                        McpSchema.CallToolRequest.builder ("list_spis_use_case_ids")
+                                                                 .arguments (Map.of ("state", "act"))
+                                                                 .build ());
 
     assertFalse (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);
@@ -533,8 +550,9 @@ public final class PeppolCodelistToolsTest
     final var aResult = m_aTools.listParticipantIdSchemesTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("list_participant_id_schemes",
-                                                                       Map.of ("state", "invalid")));
+                                        McpSchema.CallToolRequest.builder ("list_participant_id_schemes")
+                                                                 .arguments (Map.of ("state", "invalid"))
+                                                                 .build ());
 
     assertTrue (aResult.isError ().booleanValue ());
     final String sContent = _text (aResult);

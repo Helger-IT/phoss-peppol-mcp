@@ -149,7 +149,7 @@ public final class PeppolCertificateTools
       final String sCert = (String) request.arguments ().get ("certificate");
       final String sCertType = (String) request.arguments ().get ("certificateType");
       final String sNetwork = (String) request.arguments ().get ("network");
-      return Helper.executeWithErrorHandling ( () -> _checkCertificateChain (sCert, sCertType, sNetwork));
+      return Helper.executeWithErrorHandling (() -> _checkCertificateChain (sCert, sCertType, sNetwork));
     });
   }
 }

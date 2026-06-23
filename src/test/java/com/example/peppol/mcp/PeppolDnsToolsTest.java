@@ -51,7 +51,10 @@ public final class PeppolDnsToolsTest
   {
     return m_aTools.resolvePeppolDnsTool ()
                    .callHandler ()
-                   .apply (null, new McpSchema.CallToolRequest ("resolve_peppol_dns", Map.of ("participantId", sPID)));
+                   .apply (null,
+                           McpSchema.CallToolRequest.builder ("resolve_peppol_dns")
+                                                    .arguments (Map.of ("participantId", sPID))
+                                                    .build ());
   }
 
   @NonNull

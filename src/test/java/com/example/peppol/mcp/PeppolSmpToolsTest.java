@@ -62,8 +62,9 @@ public final class PeppolSmpToolsTest
     // example Norwegian participant
     final var aResult = aSpec.callHandler ()
                              .apply (null,
-                                     new McpSchema.CallToolRequest ("lookup_peppol_participant",
-                                                                    Map.of ("participantId", "0192:991825827")));
+                                     McpSchema.CallToolRequest.builder ("lookup_peppol_participant")
+                                                              .arguments (Map.of ("participantId", "0192:991825827"))
+                                                              .build ());
 
     assertNotNull (aResult);
     // If registered: isError=false and body contains smpUrl
@@ -80,9 +81,10 @@ public final class PeppolSmpToolsTest
     // unlikely to be registered
     final var aResult = aSpec.callHandler ()
                              .apply (null,
-                                     new McpSchema.CallToolRequest ("lookup_peppol_participant",
-                                                                    Map.of ("participantId",
-                                                                            "9997:surely-not-existing")));
+                                     McpSchema.CallToolRequest.builder ("lookup_peppol_participant")
+                                                              .arguments (Map.of ("participantId",
+                                                                                  "9997:surely-not-existing"))
+                                                              .build ());
 
     assertNotNull (aResult);
     // The tool gracefully handles non-existent participants: isError=false, registered=false
@@ -97,8 +99,9 @@ public final class PeppolSmpToolsTest
     final var aResult = m_aTools.getSmpServiceGroupsTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("get_smp_service_groups",
-                                                                       Map.of ("participantId", "0192:991825827")));
+                                        McpSchema.CallToolRequest.builder ("get_smp_service_groups")
+                                                                 .arguments (Map.of ("participantId", "0192:991825827"))
+                                                                 .build ());
     assertNotNull (aResult);
     assertNotNull (aResult.content ());
     assertFalse (aResult.content ().isEmpty ());
@@ -113,8 +116,10 @@ public final class PeppolSmpToolsTest
     final var aResult = m_aTools.getSmpServiceGroupsTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("get_smp_service_groups",
-                                                                       Map.of ("participantId", "not-a-valid-pid")));
+                                        McpSchema.CallToolRequest.builder ("get_smp_service_groups")
+                                                                 .arguments (Map.of ("participantId",
+                                                                                     "not-a-valid-pid"))
+                                                                 .build ());
     assertNotNull (aResult);
     assertTrue ("Expected isError=true for malformed participant ID", aResult.isError ().booleanValue ());
   }
@@ -125,11 +130,12 @@ public final class PeppolSmpToolsTest
     final var aResult = m_aTools.getSmpSignatureInfoTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("get_smp_signature_info",
-                                                                       Map.of ("participantId",
-                                                                               "not-a-valid-pid",
-                                                                               "documentTypeId",
-                                                                               "busdox-docid-qns::dummy")));
+                                        McpSchema.CallToolRequest.builder ("get_smp_signature_info")
+                                                                 .arguments (Map.of ("participantId",
+                                                                                     "not-a-valid-pid",
+                                                                                     "documentTypeId",
+                                                                                     "busdox-docid-qns::dummy"))
+                                                                 .build ());
     assertNotNull (aResult);
     assertTrue ("Expected isError=true for malformed participant ID", aResult.isError ().booleanValue ());
   }
@@ -142,11 +148,12 @@ public final class PeppolSmpToolsTest
     final var aResult = m_aTools.getSmpSignatureInfoTool ()
                                 .callHandler ()
                                 .apply (null,
-                                        new McpSchema.CallToolRequest ("get_smp_signature_info",
-                                                                       Map.of ("participantId",
-                                                                               "9999:does-not-exist-1234567890",
-                                                                               "documentTypeId",
-                                                                               "busdox-docid-qns::dummy")));
+                                        McpSchema.CallToolRequest.builder ("get_smp_signature_info")
+                                                                 .arguments (Map.of ("participantId",
+                                                                                     "9999:does-not-exist-1234567890",
+                                                                                     "documentTypeId",
+                                                                                     "busdox-docid-qns::dummy"))
+                                                                 .build ());
     assertNotNull (aResult);
     assertNotNull (aResult.content ());
     assertFalse (aResult.content ().isEmpty ());

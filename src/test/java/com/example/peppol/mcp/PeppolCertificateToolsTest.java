@@ -52,7 +52,8 @@ public final class PeppolCertificateToolsTest
       aArgs.put ("network", sNetwork);
     return m_aTools.checkCertificateChainTool ()
                    .callHandler ()
-                   .apply (null, new McpSchema.CallToolRequest ("check_certificate_chain", aArgs));
+                   .apply (null,
+                           McpSchema.CallToolRequest.builder ("check_certificate_chain").arguments (aArgs).build ());
   }
 
   @NonNull
@@ -103,7 +104,8 @@ public final class PeppolCertificateToolsTest
   @Test
   public void testTestRootAgainstProductionAP () throws Exception
   {
-    // The Peppol G3 Test root CA is a valid X.509 cert, but it is self-signed (issuer == subject == TEST root)
+    // The Peppol G3 Test root CA is a valid X.509 cert, but it is self-signed (issuer == subject ==
+    // TEST root)
     // — so checking it against the PRODUCTION AP CA should yield "unsupportedissuer".
     final String sPem = CertificateHelper.getPEMEncodedCertificate (PeppolTrustStores.Config2025.CERTIFICATE_TEST_ROOT);
     final CallToolResult aResult = _call (sPem, "AP", "production");
@@ -118,7 +120,8 @@ public final class PeppolCertificateToolsTest
   @Test
   public void testProdRootAgainstTestSMP () throws Exception
   {
-    // Same idea, swapped: PRODUCTION root self-signed, checked against TEST SMP CA → unsupportedissuer
+    // Same idea, swapped: PRODUCTION root self-signed, checked against TEST SMP CA →
+    // unsupportedissuer
     final String sPem = CertificateHelper.getPEMEncodedCertificate (PeppolTrustStores.Config2025.CERTIFICATE_PRODUCTION_ROOT);
     final CallToolResult aResult = _call (sPem, "SMP", "test");
     assertNotNull (aResult);
