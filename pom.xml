@@ -64,11 +64,11 @@
   </developers>
 
   <properties>
-    <logback.version>1.5.34</logback.version>
+    <logback.version>1.5.37</logback.version>
     <mcp-sdk.version>2.0.0</mcp-sdk.version>
     <picocli.version>4.7.7</picocli.version>
 
-    <peppol-commons.version>12.5.3</peppol-commons.version>
+    <peppol-commons.version>12.5.4</peppol-commons.version>
   </properties>
   
   <dependencyManagement>
