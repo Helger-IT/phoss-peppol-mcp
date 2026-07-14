@@ -68,7 +68,7 @@
     <mcp-sdk.version>2.0.0</mcp-sdk.version>
     <picocli.version>4.7.7</picocli.version>
 
-    <peppol-commons.version>12.5.4</peppol-commons.version>
+    <peppol-commons.version>12.5.5</peppol-commons.version>
   </properties>
   
   <dependencyManagement>
