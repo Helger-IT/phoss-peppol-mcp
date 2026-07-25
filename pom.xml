@@ -64,7 +64,7 @@
   </developers>
 
   <properties>
-    <logback.version>1.5.38</logback.version>
+    <logback.version>1.6.0</logback.version>
     <mcp-sdk.version>2.0.0</mcp-sdk.version>
     <picocli.version>4.7.7</picocli.version>
 
