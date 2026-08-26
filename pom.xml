@@ -64,8 +64,8 @@
   </developers>
 
   <properties>
-    <logback.version>1.6.2</logback.version>
-    <mcp-sdk.version>2.0.0</mcp-sdk.version>
+    <logback.version>1.6.3</logback.version>
+    <mcp-sdk.version>2.0.1</mcp-sdk.version>
     <picocli.version>4.7.7</picocli.version>
 
     <peppol-commons.version>12.8.1</peppol-commons.version>
