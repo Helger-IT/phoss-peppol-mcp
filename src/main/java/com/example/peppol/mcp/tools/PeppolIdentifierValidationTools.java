@@ -49,7 +49,8 @@ public class PeppolIdentifierValidationTools
         final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", true)
                                                                                 .add ("scheme", aPID.getScheme ())
                                                                                 .add ("value", aPID.getValue ())
-                                                                                .add ("uriEncoded", aPID.getURIEncoded ()));
+                                                                                .add ("uriEncoded",
+                                                                                      aPID.getURIEncoded ()));
         return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
       }
 
@@ -106,7 +107,8 @@ public class PeppolIdentifierValidationTools
         final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", true)
                                                                                 .add ("scheme", aDTID.getScheme ())
                                                                                 .add ("value", aDTID.getValue ())
-                                                                                .add ("uriEncoded", aDTID.getURIEncoded ()));
+                                                                                .add ("uriEncoded",
+                                                                                      aDTID.getURIEncoded ()));
         return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
       }
       final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", false)
@@ -162,7 +164,8 @@ public class PeppolIdentifierValidationTools
         final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", true)
                                                                                 .add ("scheme", aPRID.getScheme ())
                                                                                 .add ("value", aPRID.getValue ())
-                                                                                .add ("uriEncoded", aPRID.getURIEncoded ()));
+                                                                                .add ("uriEncoded",
+                                                                                      aPRID.getURIEncoded ()));
         return McpSchema.CallToolResult.builder ().addTextContent (sJSON).isError (Boolean.FALSE).build ();
       }
       final String sJSON = Helper.JSON_WRITER.writeAsString (new JsonObject ().add ("valid", false)

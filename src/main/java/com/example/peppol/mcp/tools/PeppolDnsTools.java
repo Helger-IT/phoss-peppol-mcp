@@ -101,7 +101,7 @@ public final class PeppolDnsTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPID = (String) Helper.getArguments (request).get ("participantId");
-      return Helper.executeWithErrorHandling ( () -> _resolveDns (sPID));
+      return Helper.executeWithErrorHandling (() -> _resolveDns (sPID));
     });
   }
 }

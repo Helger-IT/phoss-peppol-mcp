@@ -362,9 +362,7 @@ public final class PeppolCodelistTools
   @NonNull
   public SyncToolSpecification getCodelistVersionTool ()
   {
-    final var aTool = McpSchema.Tool.builder ("get_peppol_codelist_version",
-                                              Helper.inputSchema (Map.of (),
-                                                                  List.of ()))
+    final var aTool = McpSchema.Tool.builder ("get_peppol_codelist_version", Helper.inputSchema (Map.of (), List.of ()))
                                     .description ("""
                                         Returns the version of the Peppol codelists currently in use. \
                                         This includes the version of the Participant identifier scheme, \
@@ -393,7 +391,8 @@ public final class PeppolCodelistTools
 
     for (final IPeppolParticipantIdentifierScheme aScheme : PeppolParticipantIdentifierSchemeManager.getAllSchemes ())
     {
-      if ((eStateFilter != null && aScheme.getState () != eStateFilter) || (StringHelper.isNotEmpty (sCountryCode) && !sCountryCode.equalsIgnoreCase (aScheme.getCountryCode ())))
+      if ((eStateFilter != null && aScheme.getState () != eStateFilter) ||
+          (StringHelper.isNotEmpty (sCountryCode) && !sCountryCode.equalsIgnoreCase (aScheme.getCountryCode ())))
         continue;
       if (!_matchesQuery (sQuery,
                           aScheme.getISO6523Code (),
@@ -448,8 +447,7 @@ public final class PeppolCodelistTools
                                                                                   "description",
                                                                                   "Maximum number of entries to return (default " +
                                                                                                  DEFAULT_LIMIT +
-                                                                                                 ")")),
-                                                                  List.of ()))
+                                                                                                 ")")), List.of ()))
                                     .description ("""
                                         Lists all Participant identifier schemes (ISO 6523 codes) from the \
                                         official Peppol codelist. Can be filtered by state, country code, \
@@ -489,7 +487,9 @@ public final class PeppolCodelistTools
 
     for (final IPeppolPredefinedDocumentTypeIdentifier aDT : PredefinedDocumentTypeIdentifierManager.getAllDocumentTypeIdentifiers ())
     {
-      if ((eStateFilter != null && aDT.getState () != eStateFilter) || (StringHelper.isNotEmpty (sDomainCommunity) && !sDomainCommunity.equalsIgnoreCase (aDT.getDomainCommunity ())))
+      if ((eStateFilter != null && aDT.getState () != eStateFilter) ||
+          (StringHelper.isNotEmpty (sDomainCommunity) &&
+           !sDomainCommunity.equalsIgnoreCase (aDT.getDomainCommunity ())))
         continue;
       if (!_matchesQuery (sQuery, aDT.getCommonName (), aDT.getValue ()))
         continue;
@@ -538,8 +538,7 @@ public final class PeppolCodelistTools
                                                                                   "description",
                                                                                   "Maximum number of entries to return (default " +
                                                                                                  DEFAULT_LIMIT +
-                                                                                                 ")")),
-                                                                  List.of ()))
+                                                                                                 ")")), List.of ()))
                                     .description ("""
                                         Lists Document Type identifiers from the official Peppol codelist. \
                                         Can be filtered by state, domain community, and/or a text query that \
@@ -618,8 +617,7 @@ public final class PeppolCodelistTools
                                                                                   "description",
                                                                                   "Maximum number of entries to return (default " +
                                                                                                  DEFAULT_LIMIT +
-                                                                                                 ")")),
-                                                                  List.of ()))
+                                                                                                 ")")), List.of ()))
                                     .description ("""
                                         Lists Process identifiers from the official Peppol codelist. \
                                         Can be filtered by state and/or a text query that matches against \
@@ -654,7 +652,8 @@ public final class PeppolCodelistTools
 
     for (final var aUseCase : EPredefinedSPISUseCaseIdentifier.values ())
     {
-      if ((eStateFilter != null && aUseCase.getState () != eStateFilter) || !_matchesQuery (sQuery, aUseCase.getUseCaseID ()))
+      if ((eStateFilter != null && aUseCase.getState () != eStateFilter) ||
+          !_matchesQuery (sQuery, aUseCase.getUseCaseID ()))
         continue;
 
       final JsonObject aEntry = new JsonObject ();
@@ -696,8 +695,7 @@ public final class PeppolCodelistTools
                                                                                   "description",
                                                                                   "Maximum number of entries to return (default " +
                                                                                                  DEFAULT_LIMIT +
-                                                                                                 ")")),
-                                                                  List.of ()))
+                                                                                                 ")")), List.of ()))
                                     .description ("""
                                         Lists SPIS (Service Provider Information Service) Use Case \
                                         identifiers from the official Peppol codelist. Can be filtered by \

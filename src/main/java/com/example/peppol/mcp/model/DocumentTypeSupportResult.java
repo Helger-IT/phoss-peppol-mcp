@@ -85,8 +85,8 @@ public class DocumentTypeSupportResult
     return ret;
   }
 
-  public void addEndpoint (@NonNull final String sProcessID, @NonNull final EndpointType aEndpoint)
-                                                                                                    throws CertificateException
+  public void addEndpoint (@NonNull final String sProcessID,
+                           @NonNull final EndpointType aEndpoint) throws CertificateException
   {
     final DocumentTypeEndpointInfo e = new DocumentTypeEndpointInfo ();
     e.setProcessID (sProcessID);

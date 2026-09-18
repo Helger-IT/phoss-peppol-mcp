@@ -168,9 +168,7 @@ public class PeppolDirectoryTools
     final int nStatusCode = aResponse.statusCode ();
     if (nStatusCode == 429)
     {
-      final String sRetryAfter = aResponse.headers ()
-                                          .firstValue (CHttpHeader.RETRY_AFTER)
-                                          .orElse (null);
+      final String sRetryAfter = aResponse.headers ().firstValue (CHttpHeader.RETRY_AFTER).orElse (null);
       throw new RuntimeException ("Peppol Directory rate limit exceeded (HTTP 429)." +
                                   (sRetryAfter != null ? " Retry after " + sRetryAfter + " seconds." : ""));
     }
@@ -198,9 +196,7 @@ public class PeppolDirectoryTools
         aSB.append ("&country=").append (_enc (sCountryCode.toUpperCase (Locale.US)));
 
       final var aResponse = _executeRequest (aSB.toString ());
-      final long nTotalResultCount = aResponse.headers ()
-                                              .firstValueAsLong ("total-result-count")
-                                              .orElse (-1);
+      final long nTotalResultCount = aResponse.headers ().firstValueAsLong ("total-result-count").orElse (-1);
       final IJsonObject aRoot = JsonReader.builder ().source (aResponse.body ()).readAsObject ();
       final var aResults = _parseMatches (aRoot);
 

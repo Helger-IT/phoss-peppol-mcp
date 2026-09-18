@@ -135,7 +135,7 @@ public class PeppolSmpTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPID = (String) Helper.getArguments (request).get ("participantId");
-      return Helper.executeWithErrorHandling ( () -> _lookupParticipant (sPID).getAsJson ());
+      return Helper.executeWithErrorHandling (() -> _lookupParticipant (sPID).getAsJson ());
     });
   }
 
@@ -144,8 +144,8 @@ public class PeppolSmpTools
   // -------------------------------------------------------------------------
 
   @NonNull
-  private DocumentTypeSupportResult _checkDocumentTypeSupport (@NonNull final String sPID, @NonNull final String sDTID)
-                                                                                                                        throws Exception
+  private DocumentTypeSupportResult _checkDocumentTypeSupport (@NonNull final String sPID,
+                                                               @NonNull final String sDTID) throws Exception
   {
     final var ret = new DocumentTypeSupportResult ();
 
@@ -199,7 +199,7 @@ public class PeppolSmpTools
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPID = (String) Helper.getArguments (request).get ("participantId");
       final String sDTID = (String) Helper.getArguments (request).get ("documentTypeId");
-      return Helper.executeWithErrorHandling ( () -> _checkDocumentTypeSupport (sPID, sDTID).getAsJson ());
+      return Helper.executeWithErrorHandling (() -> _checkDocumentTypeSupport (sPID, sDTID).getAsJson ());
     });
   }
 
@@ -272,7 +272,7 @@ public class PeppolSmpTools
       final String sPID = (String) Helper.getArguments (request).get ("participantId");
       final String sDTID = (String) Helper.getArguments (request).get ("documentTypeId");
       final String sPRID = (String) Helper.getArguments (request).get ("processId");
-      return Helper.executeWithErrorHandling ( () -> _getEndpointUrl (sPID, sDTID, sPRID).getAsJson ());
+      return Helper.executeWithErrorHandling (() -> _getEndpointUrl (sPID, sDTID, sPRID).getAsJson ());
     });
   }
 
@@ -329,7 +329,7 @@ public class PeppolSmpTools
 
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPID = (String) Helper.getArguments (request).get ("participantId");
-      return Helper.executeWithErrorHandling ( () -> _getServiceGroups (sPID));
+      return Helper.executeWithErrorHandling (() -> _getServiceGroups (sPID));
     });
   }
 
@@ -425,7 +425,7 @@ public class PeppolSmpTools
     return new SyncToolSpecification (aTool, (exchange, request) -> {
       final String sPID = (String) Helper.getArguments (request).get ("participantId");
       final String sDTID = (String) Helper.getArguments (request).get ("documentTypeId");
-      return Helper.executeWithErrorHandling ( () -> _getSmpSignatureInfo (sPID, sDTID));
+      return Helper.executeWithErrorHandling (() -> _getSmpSignatureInfo (sPID, sDTID));
     });
   }
 }

@@ -49,9 +49,9 @@ final class Helper
   {}
 
   /**
-   * Build an MCP tool input schema as a plain Map, replacing the deprecated
-   * McpSchema.JsonSchema type. All Peppol tools use an object schema with a fixed
-   * set of properties, the listed required properties and no additional properties.
+   * Build an MCP tool input schema as a plain Map, replacing the deprecated McpSchema.JsonSchema
+   * type. All Peppol tools use an object schema with a fixed set of properties, the listed required
+   * properties and no additional properties.
    *
    * @param aProperties
    *        The JSON schema properties. May not be <code>null</code>.
