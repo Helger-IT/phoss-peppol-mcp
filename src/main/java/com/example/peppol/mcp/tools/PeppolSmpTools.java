@@ -39,8 +39,8 @@ import com.helger.peppolid.IDocumentTypeIdentifier;
 import com.helger.peppolid.IParticipantIdentifier;
 import com.helger.security.certificate.CertificateDecodeHelper;
 import com.helger.smpclient.peppol.SMPClientReadOnly;
-import com.helger.smpclient.url.PeppolNaptrURLProvider;
 import com.helger.smpclient.url.SMPDNSResolutionException;
+import com.helger.smpclient.url.dns.PeppolNaptrURLProvider;
 import com.helger.xsds.peppol.smp1.SignedServiceMetadataType;
 import com.helger.xsds.xmldsig.X509DataType;
 

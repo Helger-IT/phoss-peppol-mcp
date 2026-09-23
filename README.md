@@ -155,6 +155,9 @@ Other CLI options: `--help`, `--version`.
 
 # News and noteworthy
 
+v0.9.0 - 2026-09-23
+* Updated to peppol-commons v13
+
 v0.5.1 - 2026-05-08
 * Added SMP tool `get_smp_service_groups` to list all document types a participant has registered
 * Added SMP tool `get_smp_signature_info` to inspect the X.509 certificate that signed an SMP response

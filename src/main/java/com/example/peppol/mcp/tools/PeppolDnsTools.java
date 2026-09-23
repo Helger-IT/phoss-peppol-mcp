@@ -27,8 +27,8 @@ import com.helger.json.IJsonObject;
 import com.helger.json.JsonObject;
 import com.helger.peppol.servicedomain.EPeppolNetwork;
 import com.helger.peppol.sml.ISMLInfo;
-import com.helger.smpclient.url.PeppolNaptrURLProvider;
 import com.helger.smpclient.url.SMPDNSResolutionException;
+import com.helger.smpclient.url.dns.PeppolNaptrURLProvider;
 
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema;

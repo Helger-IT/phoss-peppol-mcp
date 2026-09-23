@@ -27,7 +27,7 @@ import com.helger.base.string.StringHelper;
 import com.helger.json.IJsonObject;
 import com.helger.json.JsonArray;
 import com.helger.json.JsonObject;
-import com.helger.peppolid.peppol.EPeppolCodeListItemState;
+import com.helger.peppolid.codelist.ECodeListItemState;
 import com.helger.peppolid.peppol.doctype.EPredefinedDocumentTypeIdentifier;
 import com.helger.peppolid.peppol.doctype.IPeppolPredefinedDocumentTypeIdentifier;
 import com.helger.peppolid.peppol.doctype.PredefinedDocumentTypeIdentifierManager;
@@ -53,19 +53,19 @@ public final class PeppolCodelistTools
   static final int DEFAULT_LIMIT = 50;
 
   @Nullable
-  private static EPeppolCodeListItemState _parseStateFilter (@Nullable final String sState)
+  private static ECodeListItemState _parseStateFilter (@Nullable final String sState)
   {
     if (sState == null || sState.isBlank ())
       return null;
 
-    final var eState = EPeppolCodeListItemState.getFromIDOrNull (sState);
+    final var eState = ECodeListItemState.getFromIDOrNull (sState);
     if (eState != null)
       return eState;
 
     // Also accept the enum name directly (ACTIVE, DEPRECATED, REMOVED)
     try
     {
-      return EPeppolCodeListItemState.valueOf (sState.toUpperCase (Locale.US));
+      return ECodeListItemState.valueOf (sState.toUpperCase (Locale.US));
     }
     catch (final IllegalArgumentException ex)
     {
